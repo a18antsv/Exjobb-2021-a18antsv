@@ -3,9 +3,11 @@ version: "3.9"
 # Describes containers (services) that make up the environment.
 services: 
   rabbitmq:
-    # Official RabbitMQ image from Docker Hub
-    image: rabbitmq:3.8.14
+    # Official RabbitMQ image from Docker Hub including management UI
+    image: rabbitmq:3.8.14-management
     # Publish ports to the outside world - bindng container port to host port (hostport:containerport)
     ports:
       # Standard AMQP protocol port
       - 5672:5672
+      # RabbitMQ management port
+      - 15672:15672
