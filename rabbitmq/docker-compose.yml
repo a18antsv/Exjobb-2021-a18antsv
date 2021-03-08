@@ -3,11 +3,20 @@ version: "3.9"
 # Describes containers (services) that make up the environment.
 services: 
   rabbitmq:
-    # Official RabbitMQ image from Docker Hub including management UI
+    # Official RabbitMQ image from Docker Hub including management UI.
     image: rabbitmq:3.8.14-management
-    # Publish ports to the outside world - bindng container port to host port (hostport:containerport)
+    # Publish ports to the outside world - bindng container port to host port (hostport:containerport).
     ports:
       # Standard AMQP protocol port
       - 5672:5672
       # RabbitMQ management port
       - 15672:15672
+    # Which custom Docker networks service should join.
+    networks: 
+      - rabbit-network
+
+# Docker Compose automatically creates a default network that all services joins, so they communicate with each other.
+# This section describes custom Docker networks that individual services can join.
+networks:
+  rabbit-network:
+    driver: bridge
