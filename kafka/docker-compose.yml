@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  zookeeper:
+    # Official Zookeeper image from Docker Hub.
+    image: zookeeper:3.6.2
+    container_name: zookeeper-node-1
+    hostname: zookeeper-node-1
+    ports: 
+      # Standard Zookeeper port which the clients connect to.
+      - 2181:2181
+    environment: 
+      ZOO_MY_ID: 1
