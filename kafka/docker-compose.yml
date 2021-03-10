@@ -11,6 +11,8 @@ services:
       - 2181:2181
     environment: 
       ZOO_MY_ID: 1
+    networks: 
+      - kafka-network
 
   kafka:
     # Popular Docker image for Apache Kafka that downloads Kafka from Apache's official Kafka website.
@@ -28,3 +30,9 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_BROKER_ID: 1
       KAFKA_ADVERTISED_HOST_NAME: localhost # Must be changed later when connecting from containerized services
+    networks: 
+      - kafka-network
+
+networks: 
+  kafka-network:
+    driver: bridge
