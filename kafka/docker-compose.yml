@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  zookeeper:
+    # Official Zookeeper image from Docker Hub.
+    image: zookeeper:3.6.2
+    container_name: zookeeper-node-1
+    hostname: zookeeper-node-1
+    ports: 
+      # Standard Zookeeper port which the clients connect to.
+      - 2181:2181
+    environment: 
+      ZOO_MY_ID: 1
+    networks: 
+      - kafka-network
+
+  kafka:
+    # Popular Docker image for Apache Kafka that downloads Kafka from Apache's official Kafka website.
+    # Kafka version specified by tag in format: <scala version>-<kafka version>
+    image: wurstmeister/kafka:2.13-2.7.0
+    container_name: kafka-broker-1
+    hostname: kafka-broker-1
+    depends_on:
+      # Kafka depends on Zookeeper. This makes sure that the Zookeeper container starts before the Kafka container
+      - zookeeper
+    ports:
+      # Default port for Kafka server.
+      - 9092:9092
+    environment: 
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: localhost # Must be changed later when connecting from containerized services
+    networks: 
+      - kafka-network
+
+networks: 
+  kafka-network:
+    driver: bridge
