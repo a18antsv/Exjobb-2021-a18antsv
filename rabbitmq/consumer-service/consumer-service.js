@@ -19,8 +19,11 @@ const amqpConnectionSettings = {
   await channel.assertQueue(QUEUE_NAME);
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
-  channel.consume(QUEUE_NAME, (messageObject) => {
+  await channel.consume(QUEUE_NAME, (messageObject) => {
     const content = messageObject.content.toString();
-    console.log(content);
+    console.log(`Consumed message with content ${content}.`);
+
+    // Acknowledge successful message consumtion to delete message from queue
+    channel.ack(messageObject);
   });
 })();
