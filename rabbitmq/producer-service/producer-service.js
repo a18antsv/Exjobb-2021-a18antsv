@@ -5,7 +5,7 @@ const EXCHANGE_TYPE = "direct";
 const QUEUE_NAME = "test-queue";
 const BINDING_KEY = "test-binding";
 const ROUTING_KEY = BINDING_KEY;
-const MESSAGE = "test-message";
+const MESSAGE = process.argv[2] || "test-message";
 
 (async () => {
 
