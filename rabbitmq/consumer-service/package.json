@@ -1,0 +1,16 @@
+{
+  "name": "consumer-service",
+  "version": "1.0.0",
+  "description": "Consumer service for RabbitMQ",
+  "main": "consumer-service.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "a18antsv",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "amqplib": "^0.7.1"
+  }
+}
