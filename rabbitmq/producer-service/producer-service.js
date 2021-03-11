@@ -31,6 +31,10 @@ const MESSAGE = "test-message";
 
   // Publish message to exchange with routing key
   channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(MESSAGE));
-
   console.log(`Published message "${MESSAGE}" to exchange "${EXCHANGE_NAME}".`);
+
+  await channel.close();
+  await connection.close();
+
+  process.exit(0);
 })();
