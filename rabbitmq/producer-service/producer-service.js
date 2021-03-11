@@ -4,6 +4,8 @@ const EXCHANGE_NAME = "test-exchange";
 const EXCHANGE_TYPE = "direct";
 const QUEUE_NAME = "test-queue";
 const BINDING_KEY = "test-binding";
+const ROUTING_KEY = BINDING_KEY;
+const MESSAGE = "test-message";
 
 (async () => {
 
@@ -27,4 +29,8 @@ const BINDING_KEY = "test-binding";
   // Binds queue to exchange according to exchange type and binding key
   await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_KEY);
 
+  // Publish message to exchange with routing key
+  channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(MESSAGE));
+
+  console.log(`Published message "${MESSAGE}" to exchange "${EXCHANGE_NAME}".`);
 })();
