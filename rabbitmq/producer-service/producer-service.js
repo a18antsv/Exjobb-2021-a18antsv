@@ -7,17 +7,17 @@ const BINDING_KEY = "test-binding";
 const ROUTING_KEY = BINDING_KEY;
 const MESSAGE = process.argv[2] || "test-message";
 
+const amqpConnectionSettings = {
+  protocol: "amqp",
+  hostname: "localhost",
+  port: 5672,
+  username: "guest",
+  password: "guest",
+  vhost: "/",
+};
+
 (async () => {
-
-  const connection = await amqp.connect({
-    protocol: "amqp",
-    hostname: "localhost",
-    port: 5672,
-    username: "guest",
-    password: "guest",
-    vhost: "/",
-  });
-
+  const connection = await amqp.connect(amqpConnectionSettings);
   const channel = await connection.createChannel();
 
   // Create exchange with given name if it does not already exist
