@@ -11,4 +11,6 @@ import amqp from "amqplib";
     vhost: "/",
   });
 
+  const channel = await connection.createChannel();
+
 })();
