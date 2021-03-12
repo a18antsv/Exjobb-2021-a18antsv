@@ -4,7 +4,7 @@ const QUEUE_NAME = "test-queue";
 
 const amqpConnectionSettings = {
   protocol: "amqp",
-  hostname: "localhost",
+  hostname: "rabbit-node-1",
   port: 5672,
   username: "guest",
   password: "guest",

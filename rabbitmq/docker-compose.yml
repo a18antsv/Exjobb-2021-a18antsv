@@ -2,6 +2,7 @@ version: "3.9"
 
 # Describes containers (services) that make up the environment.
 services: 
+
   rabbitmq:
     # Official RabbitMQ image from Docker Hub including management UI.
     image: rabbitmq:3.8.14-management
@@ -16,6 +17,29 @@ services:
       # RabbitMQ management port
       - 15672:15672
     # Which custom Docker networks service should join.
+    networks: 
+      - rabbit-network
+  
+  producer:
+    # Relative path to a directory that contains a Dockerfile to build an image from.
+    build: ./producer-service/.
+    container_name: rabbit-producer-service
+    # It takes some time for RabbitMQ to start up and get ready for incoming TCP-connections.
+    # This will make the producer and consumer services crash as the connection is refused.
+    # Indefinitely restarting the containers when they stop is a temporary fix.
+    # A better fix should be made in another issue by using Docker healthcheck for example.
+    restart: unless-stopped
+    depends_on: 
+      - rabbitmq
+    networks: 
+      - rabbit-network
+  
+  consumer:
+    build: ./consumer-service/.
+    container_name: rabbit-consumer-service
+    restart: unless-stopped
+    depends_on: 
+      - rabbitmq
     networks: 
       - rabbit-network
 
