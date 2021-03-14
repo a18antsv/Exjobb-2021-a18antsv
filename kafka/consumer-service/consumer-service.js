@@ -5,6 +5,7 @@ const kafka = new Kafka({
   brokers: ["localhost:9092"]
 });
 
+// Create a consumer that joins a consumer group (required)
 const consumer = kafka.consumer({
   groupId: "test-consumer-group"
 });
@@ -12,11 +13,13 @@ const consumer = kafka.consumer({
 (async () => {
   await consumer.connect();
 
+  // Subscribe consumer group to topic and start using latest offset
   await consumer.subscribe({
     topic: "test-topic",
     fromBeginning: false
   });
   
+  // Run consumer and handle one message at a time
   consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       console.log(`
