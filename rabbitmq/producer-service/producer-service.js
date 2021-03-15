@@ -5,7 +5,23 @@ const EXCHANGE_TYPE = "direct";
 const QUEUE_NAME = "test-queue";
 const BINDING_KEY = "test-binding";
 const ROUTING_KEY = BINDING_KEY;
-const MESSAGE = process.argv[2] || "test-message";
+
+const airQualityObservation = {
+  stationId: "air_station_01",
+  timestamp: "2021-03-15 21:00:00",
+  coordinates: {
+    lat: 37.5665,
+    long: 126.9780
+  },
+  concentrations: {
+    pm25: 58.78,
+    pm10: 88.05,
+    no2: 45.79,
+    co: 0.96,
+    o3: 55.69,
+    so2: 8.98
+  }
+};
 
 const amqpConnectionSettings = {
   protocol: "amqp",
@@ -30,8 +46,8 @@ const amqpConnectionSettings = {
   await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_KEY);
 
   // Publish message to exchange with routing key
-  channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(MESSAGE));
-  console.log(`Published message "${MESSAGE}" to exchange "${EXCHANGE_NAME}".`);
+  channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
+  console.log(`Published message "${JSON.stringify(airQualityObservation)}" to exchange "${EXCHANGE_NAME}".`);
 
   await channel.close();
   await connection.close();
