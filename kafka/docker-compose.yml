@@ -24,12 +24,41 @@ services:
       # Kafka depends on Zookeeper. This makes sure that the Zookeeper container starts before the Kafka container
       - zookeeper
     ports:
-      # Default port for Kafka server.
-      - 9092:9092
+      # Bind container port to host port (hostport:containerport).
+      - 19092:19092
     environment: 
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_BROKER_ID: 1
-      KAFKA_ADVERTISED_HOST_NAME: localhost # Must be changed later when connecting from containerized services
+      # How kafka nodes communicate.
+      KAFKA_LISTENERS: INTERNAL://kafka-broker-1:9092,EXTERNAL://kafka-broker-1:19092
+      # How clients connect. 
+      # INTERNAL listener for traffic from the internal Docker network.
+      # EXTERNAL listener for traffic coming from outside Docker network, but still only from Docker-host machine.
+      # EXTERNAL listener used during testing to be able to use Kafka VScode extension to test the Kafka cluster.
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-broker-1:9092,EXTERNAL://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      # Create test topic with 1 partition and replication factor 1 if it does not already exists (special for the wurstmeister Kafka image)
+      KAFKA_CREATE_TOPICS: test-topic:1:1
+    networks: 
+      - kafka-network
+
+  producer:
+    # Relative path to a directory that contains a Dockerfile to build an image from.
+    build: ./producer-service/.
+    container_name: kafka-producer-service
+    depends_on: 
+      - zookeeper
+      - kafka
+    networks: 
+      - kafka-network
+  
+  consumer:
+    build: ./consumer-service/.
+    container_name: kafka-consumer-service
+    depends_on: 
+      - zookeeper
+      - kafka
     networks: 
       - kafka-network
 

@@ -8,7 +8,9 @@ const MESSAGE_OBJECT = {
 
 const kafka = new Kafka({
   clientId: "producer-service-1",
-  brokers: ["localhost:9092"]
+  brokers: [ 
+    "kafka-broker-1:9092" 
+  ]
 });
 const producer = kafka.producer();
 
@@ -17,7 +19,9 @@ const producer = kafka.producer();
 
   await producer.send({
     topic: TOPIC_NAME,
-    messages: [ MESSAGE_OBJECT ],
+    messages: [
+      MESSAGE_OBJECT
+    ],
     acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
     timeout: 30000,
     compression: CompressionTypes.None,

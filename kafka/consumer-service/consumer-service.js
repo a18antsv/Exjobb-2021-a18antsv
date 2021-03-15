@@ -2,7 +2,9 @@ import { Kafka } from "kafkajs";
 
 const kafka = new Kafka({
   clientId: "consumer-service-1",
-  brokers: ["localhost:9092"]
+  brokers: [
+    "kafka-broker-1:9092"
+  ]
 });
 
 // Create a consumer that joins a consumer group (required)
