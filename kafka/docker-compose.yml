@@ -41,6 +41,25 @@ services:
     networks: 
       - kafka-network
 
+  producer:
+    # Relative path to a directory that contains a Dockerfile to build an image from.
+    build: ./producer-service/.
+    container_name: kafka-producer-service
+    depends_on: 
+      - zookeeper
+      - kafka
+    networks: 
+      - kafka-network
+  
+  consumer:
+    build: ./consumer-service/.
+    container_name: kafka-consumer-service
+    depends_on: 
+      - zookeeper
+      - kafka
+    networks: 
+      - kafka-network
+
 networks: 
   kafka-network:
     driver: bridge
