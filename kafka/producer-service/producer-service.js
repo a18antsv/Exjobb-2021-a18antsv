@@ -1,9 +1,27 @@
 import { CompressionTypes, Kafka } from "kafkajs";
 
 const TOPIC_NAME = "test-topic";
+
+const airQualityObservation = {
+  stationId: "air_station_01",
+  timestamp: "2021-03-15 21:00:00",
+  coordinates: {
+    lat: 37.5665,
+    long: 126.9780
+  },
+  concentrations: {
+    pm25: 58.78,
+    pm10: 88.05,
+    no2: 45.79,
+    co: 0.96,
+    o3: 55.69,
+    so2: 8.98
+  }
+};
+
 const MESSAGE_OBJECT = {
-  key: "test-key",
-  value: "test-message",
+  key: "air_station_01",
+  value: JSON.stringify(airQualityObservation),
 };
 
 const kafka = new Kafka({
