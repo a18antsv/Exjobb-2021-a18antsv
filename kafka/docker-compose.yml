@@ -44,8 +44,11 @@ services:
       - kafka-network
 
   producer:
-    # Relative path to a directory that contains a Dockerfile to build an image from.
-    build: ./producer-service/.
+    build:
+      # Use root directory as build context to allow for copying of files from shared folders
+      context: ../
+      # Relative path to a Dockerfile to build an image from.
+      dockerfile: ./kafka/producer-service/Dockerfile
     container_name: kafka-producer-service
     depends_on: 
       - zookeeper
@@ -54,7 +57,9 @@ services:
       - kafka-network
   
   consumer:
-    build: ./consumer-service/.
+    build:
+      context: ../
+      dockerfile: ./kafka/consumer-service/Dockerfile
     container_name: kafka-consumer-service
     depends_on: 
       - zookeeper

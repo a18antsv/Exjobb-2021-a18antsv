@@ -1,0 +1,1 @@
+This is a textfile that will can be copied into different services after the build context change.
