@@ -7,8 +7,14 @@ WORKDIR /usr/src/consumer-service
 # Copy package.json and package-lock.json in separate layer to facilitate caching as dependencies do not change often
 COPY ./kafka/consumer-service/package*.json ./
 
-# Install dependencies specified in package.json
-RUN npm install
+# Argument passed when building image, used to determine the environment to build image for.
+ARG NODE_ENV=development
+
+# Install different dependencies specified in package.json depending on environment argument
+RUN if [ "${NODE_ENV}" = "development" ]; \
+  then npm install; \
+  else npm install --only=production; \
+  fi
 
 # Copy the rest of the files in the same directory as the Dockerfile to the set image working directory
 COPY ./kafka/consumer-service/ ./
