@@ -17,7 +17,7 @@ services:
       - /usr/src/producer-service/node_modules
     environment: 
       - NODE_ENV=development
-    command: npm run prod
+    command: npm run dev
 
   consumer:
     build:
