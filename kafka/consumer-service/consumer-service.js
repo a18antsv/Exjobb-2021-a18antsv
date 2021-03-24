@@ -1,4 +1,9 @@
 import { Kafka } from "kafkajs";
+import { 
+  promiseHandler as handler
+} from "./utils.mjs";
+
+const TOPIC_NAME = "test-topic";
 
 const kafka = new Kafka({
   clientId: "consumer-service-1",
@@ -13,16 +18,26 @@ const consumer = kafka.consumer({
 });
 
 (async () => {
-  await consumer.connect();
+  let [error, _] = [undefined, undefined];
+
+  [error] = await handler(consumer.connect());
+
+  if(error) {
+    return console.error("Could not connect to Kafka...");
+  }
 
   // Subscribe consumer group to topic and start using latest offset
-  await consumer.subscribe({
-    topic: "test-topic",
+  [error] = await handler(consumer.subscribe({
+    topic: TOPIC_NAME,
     fromBeginning: false
-  });
+  }));
+  
+  if(!error) {
+    console.log(`Successfully subscribed to topic ${TOPIC_NAME}!`);
+  }
   
   // Run consumer and handle one message at a time
-  consumer.run({
+  await handler(consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       const { 
         stationId,
@@ -48,6 +63,5 @@ const consumer = kafka.consumer({
           - SO2 ${concentrations.so2}
       `);
     }
-  });
-  
+  }));
 })();

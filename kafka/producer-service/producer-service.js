@@ -1,6 +1,7 @@
 import { CompressionTypes, Kafka } from "kafkajs";
-
-const TOPIC_NAME = "test-topic";
+import { 
+  promiseHandler as handler
+} from "./utils.mjs";
 
 const airQualityObservation = {
   stationId: "air_station_01",
@@ -19,6 +20,8 @@ const airQualityObservation = {
   }
 };
 
+const TOPIC_NAME = "test-topic";
+
 const MESSAGE_OBJECT = {
   key: "air_station_01",
   value: JSON.stringify(airQualityObservation),
@@ -33,9 +36,17 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 (async () => {
-  await producer.connect();
+  // Array as returned by promise handler utility function.
+  let [error, response] = [undefined, undefined];
+  
+  // Some promises return void when resolving, making the response undefined and not necessary to destructure.
+  [error] = await handler(producer.connect());
 
-  await producer.send({
+  if(error) {
+    return console.error("Could not connect to Kafka...");
+  }
+
+  [error, response] = await handler(producer.send({
     topic: TOPIC_NAME,
     messages: [
       MESSAGE_OBJECT
@@ -43,9 +54,13 @@ const producer = kafka.producer();
     acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
     timeout: 30000,
     compression: CompressionTypes.None,
-  });
+  }));
 
-  await producer.disconnect();
+  if(!error) {
+    console.log(`Successfully sent message! Response: ${JSON.stringify(response)}`);
+  }
+
+  await handler(producer.disconnect());
 
   process.exit(0);
 })();
