@@ -1,9 +1,12 @@
 import amqp from "amqplib";
 import { 
   promiseHandler as handler
-} from "./utils.mjs";
+} from "./utils.js";
+import { connectToRabbitMQ } from "./connection.js";
 
 const QUEUE_NAME = "test-queue";
+const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
+const MAXIMUM_NUMBER_OF_RETRIES = 30;
 
 const amqpConnectionSettings = {
   protocol: "amqp",
@@ -15,10 +18,11 @@ const amqpConnectionSettings = {
 };
 
 (async () => {
-  const [connectionError, connection] = await handler(amqp.connect(amqpConnectionSettings));
+  const [connectionError, connection] = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_RETRIES, MAXIMUM_NUMBER_OF_RETRIES);
   if(connectionError) {
-    return console.error("Could not connect to RabbitMQ...");
+    return console.error("Exceeded maximum number of failed connection retries to RabbitMQ. Exiting...");
   }
+  console.log("Successfully connected to RabbitMQ");
 
   const [channelError, channel] = await handler(connection.createChannel());
   if(channelError) {

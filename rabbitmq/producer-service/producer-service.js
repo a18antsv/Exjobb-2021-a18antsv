@@ -1,13 +1,16 @@
 import amqp from "amqplib";
 import { 
   promiseHandler as handler
-} from "./utils.mjs";
+} from "./utils.js";
+import { connectToRabbitMQ } from "./connection.js";
 
 const EXCHANGE_NAME = "test-exchange";
 const EXCHANGE_TYPE = "direct";
 const QUEUE_NAME = "test-queue";
 const BINDING_KEY = "test-binding";
 const ROUTING_KEY = BINDING_KEY;
+const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
+const MAXIMUM_NUMBER_OF_RETRIES = 30;
 
 const airQualityObservation = {
   stationId: "air_station_01",
@@ -36,12 +39,11 @@ const amqpConnectionSettings = {
 };
 
 (async () => {
-  const [connectionError, connection] = await handler(amqp.connect(amqpConnectionSettings));
+  const [connectionError, connection] = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_RETRIES, MAXIMUM_NUMBER_OF_RETRIES);
   if(connectionError) {
-    // Kafka already have configurable retries in the kafkajs library.
-    // AMQPlib does not, so retrying to connect to RabbitMQ can be done with a recursive function here to solve issue #14
-    return console.error("Could not connect to RabbitMQ...");
+    return console.error("Exceeded maximum number of failed connection retries to RabbitMQ. Exiting...");
   }
+  console.log("Successfully connected to RabbitMQ");
 
   const [channelError, channel] = await handler(connection.createChannel());
   if(channelError) {
