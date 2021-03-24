@@ -5,7 +5,8 @@ import {
 import { connectToRabbitMQ } from "./connection.js";
 
 const QUEUE_NAME = "test-queue";
-const SECONDS_BETWEEN_CONNECTION_ATTEMPTS = 2;
+const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
+const MAXIMUM_NUMBER_OF_RETRIES = 30;
 
 const amqpConnectionSettings = {
   protocol: "amqp",
@@ -17,7 +18,10 @@ const amqpConnectionSettings = {
 };
 
 (async () => {
-  const connection = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_ATTEMPTS);
+  const [connectionError, connection] = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_RETRIES, MAXIMUM_NUMBER_OF_RETRIES);
+  if(connectionError) {
+    return console.error("Exceeded maximum number of failed connection retries to RabbitMQ. Exiting...");
+  }
   console.log("Successfully connected to RabbitMQ");
 
   const [channelError, channel] = await handler(connection.createChannel());
