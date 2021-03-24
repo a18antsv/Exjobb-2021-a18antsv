@@ -1,4 +1,7 @@
 import amqp from "amqplib";
+import { 
+  promiseHandler as handler
+} from "./utils.mjs";
 
 const EXCHANGE_NAME = "test-exchange";
 const EXCHANGE_TYPE = "direct";
@@ -33,24 +36,42 @@ const amqpConnectionSettings = {
 };
 
 (async () => {
-  const connection = await amqp.connect(amqpConnectionSettings);
-  const channel = await connection.createChannel();
+  const [connectionError, connection] = await handler(amqp.connect(amqpConnectionSettings));
+  if(connectionError) {
+    // Kafka already have configurable retries in the kafkajs library.
+    // AMQPlib does not, so retrying to connect to RabbitMQ can be done with a recursive function here to solve issue #14
+    return console.error("Could not connect to RabbitMQ...");
+  }
+
+  const [channelError, channel] = await handler(connection.createChannel());
+  if(channelError) {
+    return console.error("Could not create channel within connection...");
+  }
 
   // Create exchange with given name if it does not already exist
-  await channel.assertExchange(EXCHANGE_NAME, EXCHANGE_TYPE);
+  const [assertExchangeError, exchangeInfo] = await handler(channel.assertExchange(EXCHANGE_NAME, EXCHANGE_TYPE));
+  if(assertExchangeError) {
+    console.log("Could not create exchange or assert exchange existance.");
+  }
 
   // Create queue with given name if it does not already exist
-  await channel.assertQueue(QUEUE_NAME);
+  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME));
+  if(assertQueueError) {
+    console.log("Could not create queue or assert queue existance.");
+  }
 
   // Binds queue to exchange according to exchange type and binding key
-  await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_KEY);
+  const [bindError] = await handler(channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, BINDING_KEY));
+  if(bindError) {
+    console.error("Could not bind queue to exchange");
+  }
 
   // Publish message to exchange with routing key
   channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
   console.log(`Published message "${JSON.stringify(airQualityObservation)}" to exchange "${EXCHANGE_NAME}".`);
 
-  await channel.close();
-  await connection.close();
+  await handler(channel.close());
+  await handler(connection.close())
 
   process.exit(0);
 })();
