@@ -14,6 +14,17 @@ const promiseHandler = promise => {
    .catch(error => [error, undefined]);
 }
 
+/**
+ * Wraps setTimeout in a promise that resolves after passed amount of time.
+ * Makes it possible to use setTimeout with async/await.
+ * @param {Number} ms Amount of time to delay in milliseconds
+ * @returns {Promise} The promise to await
+ */
+const delay = ms => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export {
-  promiseHandler
+  promiseHandler,
+  delay
 }
