@@ -36,17 +36,13 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 (async () => {
-  // Array as returned by promise handler utility function.
-  let [error, response] = [undefined, undefined];
-  
   // Some promises return void when resolving, making the response undefined and not necessary to destructure.
-  [error] = await handler(producer.connect());
-
-  if(error) {
+  const [connectionError] = await handler(producer.connect());
+  if(connectionError) {
     return console.error("Could not connect to Kafka...");
   }
 
-  [error, response] = await handler(producer.send({
+  const [sendError, producerRecordMetadata] = await handler(producer.send({
     topic: TOPIC_NAME,
     messages: [
       MESSAGE_OBJECT
@@ -56,8 +52,8 @@ const producer = kafka.producer();
     compression: CompressionTypes.None,
   }));
 
-  if(!error) {
-    console.log(`Successfully sent message! Response: ${JSON.stringify(response)}`);
+  if(!sendError) {
+    console.log(`Successfully sent message! Response: ${JSON.stringify(producerRecordMetadata)}`);
   }
 
   await handler(producer.disconnect());

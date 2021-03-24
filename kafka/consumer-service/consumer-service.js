@@ -18,21 +18,17 @@ const consumer = kafka.consumer({
 });
 
 (async () => {
-  let [error, _] = [undefined, undefined];
-
-  [error] = await handler(consumer.connect());
-
-  if(error) {
+  const [connectionError] = await handler(consumer.connect());
+  if(connectionError) {
     return console.error("Could not connect to Kafka...");
   }
 
   // Subscribe consumer group to topic and start using latest offset
-  [error] = await handler(consumer.subscribe({
+  const [subscribeError] = await handler(consumer.subscribe({
     topic: TOPIC_NAME,
     fromBeginning: false
   }));
-  
-  if(!error) {
+  if(!subscribeError) {
     console.log(`Successfully subscribed to topic ${TOPIC_NAME}!`);
   }
   
