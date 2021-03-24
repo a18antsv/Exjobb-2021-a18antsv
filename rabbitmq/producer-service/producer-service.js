@@ -1,7 +1,7 @@
 import amqp from "amqplib";
 import { 
   promiseHandler as handler
-} from "./utils.mjs";
+} from "./utils.js";
 import { connectToRabbitMQ } from "./connection.js";
 
 const EXCHANGE_NAME = "test-exchange";

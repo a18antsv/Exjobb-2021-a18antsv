@@ -1,7 +1,7 @@
 import { CompressionTypes, Kafka } from "kafkajs";
 import { 
   promiseHandler as handler
-} from "./utils.mjs";
+} from "./utils.js";
 
 const airQualityObservation = {
   stationId: "air_station_01",
