@@ -2,8 +2,10 @@ import amqp from "amqplib";
 import { 
   promiseHandler as handler
 } from "./utils.mjs";
+import { connectToRabbitMQ } from "./connection.js";
 
 const QUEUE_NAME = "test-queue";
+const SECONDS_BETWEEN_CONNECTION_ATTEMPTS = 2;
 
 const amqpConnectionSettings = {
   protocol: "amqp",
@@ -15,10 +17,8 @@ const amqpConnectionSettings = {
 };
 
 (async () => {
-  const [connectionError, connection] = await handler(amqp.connect(amqpConnectionSettings));
-  if(connectionError) {
-    return console.error("Could not connect to RabbitMQ...");
-  }
+  const connection = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_ATTEMPTS);
+  console.log("Successfully connected to RabbitMQ");
 
   const [channelError, channel] = await handler(connection.createChannel());
   if(channelError) {
