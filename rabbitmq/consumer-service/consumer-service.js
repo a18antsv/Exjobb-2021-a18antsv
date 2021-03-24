@@ -1,4 +1,7 @@
 import amqp from "amqplib";
+import { 
+  promiseHandler as handler
+} from "./utils.mjs";
 
 const QUEUE_NAME = "test-queue";
 
@@ -12,14 +15,23 @@ const amqpConnectionSettings = {
 };
 
 (async () => {
-  const connection = await amqp.connect(amqpConnectionSettings);
-  const channel = await connection.createChannel();
+  const [connectionError, connection] = await handler(amqp.connect(amqpConnectionSettings));
+  if(connectionError) {
+    return console.error("Could not connect to RabbitMQ...");
+  }
 
-  // Create queue with given name if it does not already exist
-  await channel.assertQueue(QUEUE_NAME);
+  const [channelError, channel] = await handler(connection.createChannel());
+  if(channelError) {
+    return console.error("Could not create channel within connection...");
+  }
+
+  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME));
+  if(assertQueueError) {
+    console.log("Could not create queue or assert queue existance.");
+  }
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
-  await channel.consume(QUEUE_NAME, (messageObject) => {
+  const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
     const { 
       stationId,
       timestamp,
@@ -43,5 +55,8 @@ const amqpConnectionSettings = {
 
     // Acknowledge successful message consumtion to delete message from queue
     channel.ack(messageObject);
-  });
+  }));
+  if(consumeError) {
+    console.log(`Could not consume from queue ${QUEUE_NAME}`);
+  }
 })();

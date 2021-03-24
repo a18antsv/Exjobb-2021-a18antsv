@@ -13,8 +13,8 @@ RUN npm install
 # Copy the rest of the files in the same directory as the Dockerfile to the set image working directory
 COPY ./kafka/consumer-service/ ./
 
-# Test to copy 
-COPY ./shared/test.txt ./
+# Copy shared utils file to set image working directory
+COPY ./shared/utils.mjs ./
 
 # Command to execute when container instance is created based on image (starts application in container)
 CMD [ "npm", "run", "start" ]
