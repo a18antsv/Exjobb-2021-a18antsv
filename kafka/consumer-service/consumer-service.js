@@ -1,7 +1,7 @@
 import { Kafka } from "kafkajs";
 import { 
   promiseHandler as handler
-} from "./utils.js";
+} from "./shared/utils.js";
 
 const TOPIC_NAME = "test-topic";
 
