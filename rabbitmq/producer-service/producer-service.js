@@ -3,6 +3,11 @@ import {
   promiseHandler as handler
 } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
+import { testAlea } from "./shared/air-quality-data-generator.js";
+
+for(let i = 0; i < 50; i++) {
+  console.log(testAlea());
+}
 
 const EXCHANGE_NAME = "test-exchange";
 const EXCHANGE_TYPE = "direct";

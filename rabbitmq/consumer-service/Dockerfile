@@ -23,4 +23,4 @@ COPY ./rabbitmq/consumer-service/ ./
 COPY ./shared/utils.js ./shared/rabbitmq-connect.js ./shared/
 
 # Command to execute when container instance is created based on image (starts application in container)
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "dev" ]

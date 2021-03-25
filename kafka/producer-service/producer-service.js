@@ -2,6 +2,11 @@ import { CompressionTypes, Kafka } from "kafkajs";
 import { 
   promiseHandler as handler
 } from "./shared/utils.js";
+import { testAlea } from "./shared/air-quality-data-generator.js";
+
+for(let i = 0; i < 50; i++) {
+  console.log(testAlea());
+}
 
 const airQualityObservation = {
   stationId: "air_station_01",
