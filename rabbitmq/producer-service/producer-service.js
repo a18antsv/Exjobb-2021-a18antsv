@@ -1,8 +1,8 @@
 import amqp from "amqplib";
 import { 
   promiseHandler as handler
-} from "./utils.js";
-import { connectToRabbitMQ } from "./connection.js";
+} from "./shared/utils.js";
+import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 
 const EXCHANGE_NAME = "test-exchange";
 const EXCHANGE_TYPE = "direct";

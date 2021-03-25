@@ -1,0 +1,32 @@
+version: "3.9"
+
+# Building upon the docker-compose.yml file to make changes for a development environment.
+# Need to give the Dockerfile the NODE_ENV argument to determine which dependencies that should be installed.
+# Mounts host folders to container to allow for saved changes to apply in container (nodemon dev dependency restarts node app on saved change).
+services: 
+  producer:
+    build:
+      args:
+        NODE_ENV: development
+    volumes: 
+      # Mount producer service files
+      - ./producer-service:/usr/src/producer-service
+      # Mount shared files
+      - ../shared:/usr/src/producer-service/shared
+      # Do not change container node_module folder when modyfing it on the host
+      - /usr/src/producer-service/node_modules
+    environment: 
+      - NODE_ENV=development
+    command: npm run dev
+
+  consumer:
+    build:
+      args:
+        NODE_ENV: development
+    volumes: 
+      - ./consumer-service:/usr/src/consumer-service
+      - ../shared:/usr/src/consumer-service/shared
+      - /usr/src/consumer-service/node_modules
+    environment: 
+      - NODE_ENV=development
+    command: npm run dev

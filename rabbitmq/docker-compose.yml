@@ -27,11 +27,6 @@ services:
       # Relative path to a Dockerfile to build an image from.
       dockerfile: ./rabbitmq/producer-service/Dockerfile
     container_name: rabbit-producer-service
-    # It takes some time for RabbitMQ to start up and get ready for incoming TCP-connections.
-    # This will make the producer and consumer services crash as the connection is refused.
-    # Indefinitely restarting the containers when they stop is a temporary fix.
-    # A better fix should be made in another issue by using Docker healthcheck for example.
-    restart: unless-stopped
     depends_on: 
       - rabbitmq
     networks: 
@@ -42,7 +37,6 @@ services:
       context: ../
       dockerfile: ./rabbitmq/consumer-service/Dockerfile
     container_name: rabbit-consumer-service
-    restart: unless-stopped
     depends_on: 
       - rabbitmq
     networks: 
