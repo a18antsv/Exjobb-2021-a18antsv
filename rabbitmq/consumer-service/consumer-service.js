@@ -1,8 +1,8 @@
 import amqp from "amqplib";
 import { 
   promiseHandler as handler
-} from "./utils.js";
-import { connectToRabbitMQ } from "./connection.js";
+} from "./shared/utils.js";
+import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 
 const QUEUE_NAME = "test-queue";
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
