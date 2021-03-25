@@ -24,7 +24,19 @@ const delay = ms => {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Generates a random floating point number between min (included) and max (included)
+ * @param {Function} rngFunction The random generator function to use
+ * @param {Number} min The minimum number
+ * @param {Number} max The maximum number
+ * @returns {Number} Random float in range
+ */
+const getRandomFloat = (rngFunction, min, max) => {
+  return rngFunction() * (max - min) + min;
+}
+
 export {
   promiseHandler,
-  delay
+  delay,
+  getRandomFloat
 }
