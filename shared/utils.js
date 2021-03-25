@@ -35,8 +35,32 @@ const getRandomFloat = (rngFunction, min, max) => {
   return rngFunction() * (max - min) + min;
 }
 
+/**
+ * Adds leading zeros to passed string based on how long the final string should be.
+ * If passed string is shorter than length, leading zeros will be added to fill up the length.
+ * If passed string is longer than length, the string will be cut from the back of the string according to length.
+ * @param {String} str The string to add leading zeros to 
+ * @param {Number} length The length of the final string 
+ * @returns {String} The passed string with leading zeros filling in available space according to passed length 
+ */
+const addLeadingZeros = (str = "", length = 2) => {
+  const zeros = "0".repeat(length);
+  return (zeros + str).slice(-length);
+}
+
+/**
+ * Gets the current timestamp without using any external libraries.
+ * Using addLeadingZeros to always keep the same format.
+ * @returns The current timestamp in the format "yyyy-mm-dd hh:mm:ss.MMM"
+ */
+const getCurrentTimestamp = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${addLeadingZeros(date.getMonth()+1)}-${addLeadingZeros(date.getDate())} ${addLeadingZeros(date.getHours())}:${addLeadingZeros(date.getMinutes())}:${addLeadingZeros(date.getSeconds())}.${addLeadingZeros(date.getMilliseconds(), 3)}`;
+}
+
 export {
   promiseHandler,
   delay,
-  getRandomFloat
+  getRandomFloat,
+  getCurrentTimestamp
 }
