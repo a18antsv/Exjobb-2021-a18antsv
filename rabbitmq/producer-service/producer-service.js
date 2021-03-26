@@ -1,39 +1,32 @@
 import amqp from "amqplib";
 import { 
-  promiseHandler as handler
+  promiseHandler as handler,
+  getCurrentTimestamp
 } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
-import { testAlea } from "./shared/air-quality-data-generator.js";
+import { getConcentrations } from "./shared/concentration-generator.js";
 
-for(let i = 0; i < 50; i++) {
-  console.log(testAlea());
-}
-
-const EXCHANGE_NAME = "test-exchange";
+const EXCHANGE_NAME = "air-quality-observation-exchange";
 const EXCHANGE_TYPE = "direct";
-const QUEUE_NAME = "test-queue";
-const BINDING_KEY = "test-binding";
+const QUEUE_NAME = "air-quality-observation-queue";
+const BINDING_KEY = "air-quality-observation-binding";
 const ROUTING_KEY = BINDING_KEY;
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
 const MAXIMUM_NUMBER_OF_RETRIES = 30;
+const NUMBER_OF_OBSERVATIONS = 100;
+let previousConcentrations;
 
-const airQualityObservation = {
-  stationId: "air_station_01",
-  timestamp: "2021-03-15 21:00:00",
+// Properties included in air quality data point that never changes for an air quality sensor station
+// Will be merged into each air quality data point
+const defaultStationProperties = {
+  stationId: "air-station-01",
   coordinates: {
     lat: 37.5665,
     long: 126.9780
-  },
-  concentrations: {
-    pm25: 58.78,
-    pm10: 88.05,
-    no2: 45.79,
-    co: 0.96,
-    o3: 55.69,
-    so2: 8.98
   }
 };
 
+// Settings used to connect to RabbitMQ
 const amqpConnectionSettings = {
   protocol: "amqp",
   hostname: "rabbit-node-1",
@@ -73,9 +66,20 @@ const amqpConnectionSettings = {
     console.error("Could not bind queue to exchange");
   }
 
-  // Publish message to exchange with routing key
-  channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
-  console.log(`Published message "${JSON.stringify(airQualityObservation)}" to exchange "${EXCHANGE_NAME}".`);
+  for(let i = 0; i < NUMBER_OF_OBSERVATIONS; i++) {
+    previousConcentrations = getConcentrations(previousConcentrations);
+
+    // Merge default properties into new object by spreading and add generated concentrations and add timestamp
+    const airQualityObservation = {
+      ...defaultStationProperties,
+      concentrations: previousConcentrations,
+      timestamp: getCurrentTimestamp()
+    };
+
+    // Publish air quality observation to exchange with routing key
+    channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
+    console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);
+  }
 
   await handler(channel.close());
   await handler(connection.close())
