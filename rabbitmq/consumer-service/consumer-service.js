@@ -4,7 +4,7 @@ import {
 } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 
-const QUEUE_NAME = "test-queue";
+const QUEUE_NAME = "air-quality-observation-queue";
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
 const MAXIMUM_NUMBER_OF_RETRIES = 30;
 
@@ -42,20 +42,7 @@ const amqpConnectionSettings = {
       coordinates,
       concentrations
     } = JSON.parse(messageObject.content.toString());
-    console.log(`
-      Consumed air quality observation from station with id ${stationId}.
-      Timestamp: ${timestamp}
-      Coordinates: 
-        - Lat: ${coordinates.lat}
-        - Long: ${coordinates.long}
-      Concentrations: 
-        - PM2.5 ${concentrations.pm25}
-        - PM10 ${concentrations.pm10}
-        - NO2 ${concentrations.no2}
-        - CO ${concentrations.co}
-        - O3 ${concentrations.o3}
-        - SO2 ${concentrations.so2}
-    `);
+    console.log(`Consumed air quality observation from station with id ${stationId}.`);
 
     // Acknowledge successful message consumtion to delete message from queue
     channel.ack(messageObject);

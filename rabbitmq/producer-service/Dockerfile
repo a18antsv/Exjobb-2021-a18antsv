@@ -20,7 +20,7 @@ RUN if [ "${NODE_ENV}" = "development" ]; \
 COPY ./rabbitmq/producer-service/ ./
 
 # Copy shared files to set image working directory
-COPY ./shared/utils.js ./shared/rabbitmq-connect.js ./shared/
+COPY ./shared/utils.js ./shared/rabbitmq-connect.js ./shared/concentration-generator.js ./shared/concentration-statistics.js ./shared/
 
 # Command to execute when container instance is created based on image (starts application in container)
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "dev" ]
