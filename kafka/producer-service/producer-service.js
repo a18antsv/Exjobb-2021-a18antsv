@@ -1,36 +1,23 @@
 import { CompressionTypes, Kafka } from "kafkajs";
 import { 
-  promiseHandler as handler
+  promiseHandler as handler,
+  getCurrentTimestamp
 } from "./shared/utils.js";
-import { testAlea } from "./shared/air-quality-data-generator.js";
+import { getConcentrations } from "./shared/concentration-generator.js";
 
-for(let i = 0; i < 50; i++) {
-  console.log(testAlea());
-}
+const NUMBER_OF_OBSERVATIONS = 100;
+const TOPIC_NAME = "air-quality-observation-topic";
+let previousConcentrations;
 
-const airQualityObservation = {
-  stationId: "air_station_01",
-  timestamp: "2021-03-15 21:00:00",
+// Properties included in air quality data point that never changes for an air quality sensor station
+// Will be merged into each air quality data point
+const defaultStationProperties = {
+  stationId: "air-station-01",
   coordinates: {
     lat: 37.5665,
     long: 126.9780
-  },
-  concentrations: {
-    pm25: 58.78,
-    pm10: 88.05,
-    no2: 45.79,
-    co: 0.96,
-    o3: 55.69,
-    so2: 8.98
   }
-};
-
-const TOPIC_NAME = "test-topic";
-
-const MESSAGE_OBJECT = {
-  key: "air_station_01",
-  value: JSON.stringify(airQualityObservation),
-};
+}
 
 const kafka = new Kafka({
   clientId: "producer-service-1",
@@ -47,18 +34,31 @@ const producer = kafka.producer();
     return console.error("Could not connect to Kafka...");
   }
 
-  const [sendError, producerRecordMetadata] = await handler(producer.send({
-    topic: TOPIC_NAME,
-    messages: [
-      MESSAGE_OBJECT
-    ],
-    acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
-    timeout: 30000,
-    compression: CompressionTypes.None,
-  }));
+  for(let i = 0; i < NUMBER_OF_OBSERVATIONS; i++) {
+    previousConcentrations = getConcentrations(previousConcentrations);
 
-  if(!sendError) {
-    console.log(`Successfully sent message! Response: ${JSON.stringify(producerRecordMetadata)}`);
+    // Merge default properties into new object by spreading and add generated concentrations and add timestamp
+    const airQualityObservation = {
+      ...defaultStationProperties,
+      concentrations: previousConcentrations,
+      timestamp: getCurrentTimestamp()
+    };
+
+    // Send air quality observation to Kafka topic
+    const [sendError, producerRecordMetadata] = await handler(producer.send({
+      topic: TOPIC_NAME,
+      messages: [{
+        key: airQualityObservation.stationId,
+        value: JSON.stringify(airQualityObservation)
+      }],
+      acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
+      timeout: 30000,
+      compression: CompressionTypes.None,
+    }));
+  
+    if(!sendError) {
+      console.log(`Successfully sent air quality observation to topic ${TOPIC_NAME}`);
+    }
   }
 
   await handler(producer.disconnect());
