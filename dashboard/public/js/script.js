@@ -99,3 +99,11 @@ newExperimentForm.addEventListener("submit", e => {
   saveToLocalStorage(EXPERIMENTS_KEY, experiments);
   renderTable();
 });
+
+/**
+ * Toggles the existance of the form elements row from the table on button click
+ */
+newExperimentButton.addEventListener("click", () => {
+  const rowNewExperiment = experimentsTable.querySelector(".row-new-experiment");
+  rowNewExperiment.toggleAttribute("hidden");
+});

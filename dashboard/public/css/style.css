@@ -11,6 +11,10 @@ button {
   font-family: inherit;
 }
 
+[hidden] { 
+  display: none !important 
+}
+
 body {
   min-height: 100vh;
   background-image: linear-gradient(to left bottom, #31c488, #1dbe8f, #05b895, #00b29a, #00ab9d, #00a5a0, #009fa2, #0099a3, #0092a4, #008ba5, #0084a4, #007da2);
