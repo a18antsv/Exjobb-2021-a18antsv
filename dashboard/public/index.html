@@ -13,11 +13,12 @@
     <div class="table-container">
       <div class="table-header">
         <div class="table-title">
-          Available experiments (<span class="experiment-counter">4</span>)
+          Available experiments (<span class="experiment-counter">0</span>)
         </div>
         <div class="button button-new-experiment">Add new experiment</div>
       </div>
       <table class="experiments-table">
+        <form id="new-experiment-form" action="/new-experiment" method="post" autocomplete="off"></form> <!-- Reference this form in inputs in table cells -->
         <thead>
           <tr>
             <th>Name</th>
@@ -29,37 +30,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Experiment 1</td>
-            <td>Kafka</td>
-            <td>1</td>
-            <td>10000</td>
-            <td>Completed</td>
-            <td>Actions</td>
-          </tr>
-          <tr>
-            <td>Experiment 2</td>
-            <td>Kafka</td>
-            <td>2</td>
-            <td>10000</td>
-            <td>In progress</td>
-            <td>Actions</td>
-          </tr>
-          <tr>
-            <td>Experiment 3</td>
-            <td>RabbitMQ</td>
-            <td>1</td>
-            <td>1000</td>
+          <tr class="row-new-experiment">
+            <td>
+              <input type="text" form="new-experiment-form" name="experimentName" maxlength="20" placeholder="Pilotstudie Kafka">
+            </td>
+            <td>
+              <select name="broker" form="new-experiment-form" required>
+                <option value="Kafka" selected>Kafka</option>
+                <option value="RabbitMQ">RabbitMQ</option>
+              </select>
+            </td>
+            <td>
+              <input type="number" form="new-experiment-form" name="producers" min="1" max="10" value="1" required>
+            </td>
+            <td>
+              <input type="number" form="new-experiment-form" name="messages" min="1" max="1000000000" value="10000" required>
+            </td>
             <td>Not started</td>
-            <td>Actions</td>
-          </tr>
-          <tr>
-            <td>Experiment 4</td>
-            <td>RabbitMQ</td>
-            <td>2</td>
-            <td>1000</td>
-            <td>Not started</td>
-            <td>Actions</td>
+            <td>
+              <input type="submit" form="new-experiment-form" value="Add">
+            </td>
           </tr>
         </tbody>
       </table>
