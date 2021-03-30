@@ -26,17 +26,26 @@ const getFromLocalStorage = key => {
 }
 
 const EXPERIMENTS_KEY = "experiments";
-const experiments = getFromLocalStorage(EXPERIMENTS_KEY);
+let experiments = getFromLocalStorage(EXPERIMENTS_KEY);
+
+/**
+ * Deletes an experiment from the experiments array based on experiment id.
+ * Saves the new array to local storage and rerenders the table.
+ * @param {Number} experimentId The id of the experiment to delete
+ */
+const deleteExperiment = experimentId => {
+  experiments = experiments.filter(experiment => {
+    return experiment.experimentId !== experimentId;
+  });
+  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
+  renderTable();
+}
 
 /**
  * Renders the available experiments table based on array of experiments loaded from local storage.
  * Updates available experiment counter.
  */
 const renderTable = () => {
-  if(experiments.length === 0) {
-    return;
-  }
-
   const tbody = experimentsTable.querySelector("tbody");
   const rowNewExperiment = tbody.querySelector(".row-new-experiment");
   const rows = tbody.querySelectorAll("tr");
@@ -95,7 +104,7 @@ newExperimentForm.addEventListener("submit", e => {
   const messages = document.querySelector(`[name="messages"]`).value;
 
   const experiment = {
-    experimentId: experiments.length + 1,
+    experimentId: Date.now(),
     experimentName,
     broker,
     producers,
