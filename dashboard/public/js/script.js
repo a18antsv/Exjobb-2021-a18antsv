@@ -62,7 +62,11 @@ const renderTable = () => {
         <td>${producers}</td>
         <td>${messages}</td>
         <td>${status}</td>
-        <td>Actions</td>
+        <td class="button-container">
+          <div class="small-button manage" onclick="manageExperiment(${experimentId});">M</div>
+          <div class="small-button queue" onclick="queueExperiment(${experimentId});">Q</div>
+          <div class="small-button delete" onclick="deleteExperiment(${experimentId});">D</div>
+        </td>
       </tr>
     `;
   });
