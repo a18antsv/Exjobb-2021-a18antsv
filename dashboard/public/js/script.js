@@ -123,3 +123,35 @@ newExperimentButton.addEventListener("click", () => {
   const rowNewExperiment = experimentsTable.querySelector(".row-new-experiment");
   rowNewExperiment.toggleAttribute("hidden");
 });
+
+/**
+ * Sorting the experiments table by clicked column header cell.
+ * First click will sort by the clicked column in ascending order and second click will sort in descending order and so on.
+ */
+let asc = false;
+experimentsTable.querySelectorAll("th[data-sortable]").forEach((th, i) => {
+  th.addEventListener("click", () => {
+    const tbody = experimentsTable.querySelector("tbody");
+    const rows = [...tbody.querySelectorAll("tr")];
+    const rowNewExperiment = rows.pop();
+    rows.sort((a, b) => {
+      let aVal = a.querySelector(`td:nth-child(${i+1})`).innerText;
+      let bVal = b.querySelector(`td:nth-child(${i+1})`).innerText;
+      if(th.hasAttribute("data-integer")) {
+        aVal = parseInt(aVal);
+        bVal = parseInt(bVal);
+      }
+      if(asc) {
+        return (aVal < bVal) ? 1 : -1;
+      } else {
+        return (aVal > bVal) ? 1 : -1;
+      }
+    });
+    asc = !asc;
+    tbody.innerHTML = "";
+    for(row of rows) {
+      tbody.appendChild(row);
+    }
+    tbody.appendChild(rowNewExperiment);
+  });
+});
