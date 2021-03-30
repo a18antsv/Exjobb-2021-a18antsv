@@ -72,6 +72,7 @@ const renderTable = () => {
 
   // Rerender removed form elements row as the last table row
   tbody.appendChild(rowNewExperiment);
+  rowNewExperiment.querySelector(`[name="experimentName"]`).value = `Experiment ${experiments.length + 1}`;
 }
 
 renderTable();
