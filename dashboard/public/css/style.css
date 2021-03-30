@@ -1,9 +1,80 @@
-/******************************
- * Table of contents          *
- ******************************
- * 1. Global styles           *
-*******************************/
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* Include padding and border in width and height of all elements */
+}
 
-/******************************
- * 1. Global styles           *
-*******************************/
+body {
+  min-height: 100vh;
+  background-image: linear-gradient(to left bottom, #31c488, #1dbe8f, #05b895, #00b29a, #00ab9d, #00a5a0, #009fa2, #0099a3, #0092a4, #008ba5, #0084a4, #007da2);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.app-container {
+  width: 80%;
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.table-container {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.table-title {
+  font-size: 24px;
+  display: inline-block;
+}
+
+.button {
+  cursor: pointer;
+  padding: 12px 36px;
+  font-size: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+thead {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+tbody {
+  
+}
+
+tbody tr:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+th {
+  padding: 24px 16px;
+  text-align: left;
+  font-size: 12px;
+  border-right: solid 1px rgba(255, 255, 255, 0.2);
+}
+
+td {
+  padding: 16px;
+  font-size: 12px;
+  border: solid 1px rgba(255, 255, 255, 0.2);
+}
