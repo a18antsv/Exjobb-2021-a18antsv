@@ -47,6 +47,7 @@ const renderTable = () => {
   // Insert row in table for each experiment
   experiments.forEach(experiment => {
     const { 
+      experimentId,
       experimentName, 
       broker, 
       producers, 
@@ -55,7 +56,7 @@ const renderTable = () => {
     } = experiment;
 
     tbody.innerHTML += `
-      <tr>
+      <tr data-experiment-id="${experimentId}">
         <td>${experimentName}</td>
         <td>${broker}</td>
         <td>${producers}</td>
@@ -89,6 +90,7 @@ newExperimentForm.addEventListener("submit", e => {
   const messages = document.querySelector(`[name="messages"]`).value;
 
   const experiment = {
+    experimentId: experiments.length + 1,
     experimentName,
     broker,
     producers,
