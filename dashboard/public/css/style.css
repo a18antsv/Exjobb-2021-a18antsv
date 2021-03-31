@@ -11,8 +11,12 @@ button {
   font-family: inherit;
 }
 
-[hidden] { 
+.hidden { 
   display: none !important 
+}
+
+.show-table-row {
+  display: table-row !important;
 }
 
 body {
@@ -31,8 +35,23 @@ body {
   padding: 48px 0;
 }
 
+.app-container.management .table-header,
+.app-container.management .experiments-table tbody tr,
+.app-container.management tr.show-table-row .button-container .manage,
+.app-container.management tr.show-table-row .button-container .delete {
+  display: none;
+}
+
+.app-container.management .management-container {
+  display: block;
+}
+
 .table-container {
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.management-container {
+  display: none;
 }
 
 .table-header {

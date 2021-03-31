@@ -1,3 +1,4 @@
+const appContainerElement = document.querySelector(".app-container");
 const experimentsTable = document.querySelector(".experiments-table");
 const experimentCounterElement = document.querySelector(".experiment-counter");
 const newExperimentButton = document.querySelector(".button-new-experiment");
@@ -38,14 +39,26 @@ const deleteExperiment = experimentId => {
     return experiment.experimentId !== experimentId;
   });
   saveToLocalStorage(EXPERIMENTS_KEY, experiments);
-  renderTable();
+  renderExperimentsTable();
+}
+
+/**
+ * Show only experiment row with passed experiment id and open up a new management view for passed experiment.
+ * @param {Number} experimentId The id of the experiment to manage
+ * @todo Management view
+ */
+const manageExperiment = experimentId => {
+  console.log(`Manage experiment with id ${experimentId}`);
+  const experimentRow = experimentsTable.querySelector(`tr[data-experiment-id="${experimentId}"]`);
+  experimentRow.classList.add("show-table-row");
+  appContainerElement.classList.add("management");
 }
 
 /**
  * Renders the available experiments table based on array of experiments loaded from local storage.
  * Updates available experiment counter.
  */
-const renderTable = () => {
+const renderExperimentsTable = () => {
   const tbody = experimentsTable.querySelector("tbody");
   const rowNewExperiment = tbody.querySelector(".row-new-experiment");
   const rows = tbody.querySelectorAll("tr");
@@ -88,7 +101,7 @@ const renderTable = () => {
   rowNewExperiment.querySelector(`[name="experimentName"]`).value = `Experiment ${experiments.length + 1}`;
 }
 
-renderTable();
+renderExperimentsTable(); // Render the table on page refresh
 
 /**
  * Executes when adding a new experiment to the table.
@@ -113,7 +126,7 @@ newExperimentForm.addEventListener("submit", e => {
   };
   experiments.push(experiment);
   saveToLocalStorage(EXPERIMENTS_KEY, experiments);
-  renderTable();
+  renderExperimentsTable();
 });
 
 /**
@@ -121,7 +134,7 @@ newExperimentForm.addEventListener("submit", e => {
  */
 newExperimentButton.addEventListener("click", () => {
   const rowNewExperiment = experimentsTable.querySelector(".row-new-experiment");
-  rowNewExperiment.toggleAttribute("hidden");
+  rowNewExperiment.classList.toggle("hidden");
 });
 
 /**
