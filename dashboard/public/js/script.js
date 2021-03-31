@@ -56,6 +56,16 @@ const manageExperiment = experimentId => {
 }
 
 /**
+ * Puts an experiment in queue for execution (status="In queue").
+ * The first experiment in queue will automatically execute (status="In progress").
+ * @param {Number} experimentId The id of the experiment to queue
+ * @todo ALL
+ */
+const queueExperiment = experimentId => {
+  console.log(`Queue experiment with id ${experimentId}`);
+}
+
+/**
  * Renders the available experiments table based on array of experiments loaded from local storage.
  * Updates available experiment counter.
  */
