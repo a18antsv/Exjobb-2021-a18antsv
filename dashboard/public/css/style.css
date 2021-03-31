@@ -80,6 +80,16 @@ body {
   color: #000000;
 }
 
+
+.back-button {
+  cursor: pointer;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 4px 12px;
+}
+
 .button-container {
   display: flex;
   justify-content: space-evenly;

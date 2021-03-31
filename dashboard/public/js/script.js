@@ -3,6 +3,7 @@ const experimentsTable = document.querySelector(".experiments-table");
 const experimentCounterElement = document.querySelector(".experiment-counter");
 const newExperimentButton = document.querySelector(".button-new-experiment");
 const newExperimentForm = document.querySelector("#new-experiment-form");
+const backButton = document.querySelector(".back-button");
 
 /**
  * Saves key/value pair in the browser's local storage.
@@ -135,6 +136,14 @@ newExperimentForm.addEventListener("submit", e => {
 newExperimentButton.addEventListener("click", () => {
   const rowNewExperiment = experimentsTable.querySelector(".row-new-experiment");
   rowNewExperiment.classList.toggle("hidden");
+});
+
+/**
+ * Go back from management view to full experiment table view when clicking the back button
+ */
+backButton.addEventListener("click", () => {
+  appContainerElement.classList.remove("management");
+  renderExperimentsTable();
 });
 
 /**
