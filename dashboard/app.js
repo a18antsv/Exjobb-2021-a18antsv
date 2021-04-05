@@ -11,7 +11,9 @@ const Status = {
   COMPLETED: "Completed"
 };
 
-let experiments = []; // All created experiments (whole JSON-objects)
+let experiments = []; // All stored experiments (whole JSON-objects)
+let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
+let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
 
 const getExperimentById = experimentId => {
   return experiments.find(experiment => experiment.experimentId === experimentId);
@@ -25,6 +27,24 @@ const setExperimentStatus = (experimentId, status) => {
   }
   experiment.status = status;
 }
+
+const runExperiment = experimentId => {
+  runningExperimentId = experimentId;
+}
+
+const nextExperiment = () => {
+  if(runningExperiment) {
+    console.log("An experiment is already running... Cannot start another one.");
+    return;
+  }
+  const experimentId = experimentIdQueue.pop();
+  if(!experimentId) {
+    console.log("There are no experiments in queue...");
+    return;
+  }
+  runExperiment(experimentId);
+}
+
 app.use("/", express.static("./public"));
 
 app.listen(port, () => {
