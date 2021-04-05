@@ -4,6 +4,10 @@ const experimentCounterElement = document.querySelector(".experiment-counter");
 const newExperimentButton = document.querySelector(".button-new-experiment");
 const newExperimentForm = document.querySelector("#new-experiment-form");
 const backButton = document.querySelector(".back-button");
+const sortableTableHeaders = experimentsTable.querySelectorAll("th[data-sortable]");
+
+const EXPERIMENTS_KEY = "experiments";
+let experiments = [];
 
 /**
  * Saves key/value pair in the browser's local storage.
@@ -56,9 +60,6 @@ const postToServer = async (route, json) => {
   const data = await response.json();
   return data;
 }
-
-const EXPERIMENTS_KEY = "experiments";
-let experiments = getFromLocalStorage(EXPERIMENTS_KEY);
 
 /**
  * Adds an experiment to the experiments array on client and sends it to the server as well
@@ -155,7 +156,25 @@ const renderExperimentsTable = () => {
   rowNewExperiment.querySelector(`[name="experimentName"]`).value = `Experiment ${experiments.length + 1}`;
 }
 
-renderExperimentsTable(); // Render the table on page refresh
+// Self invoking async function to be able to use top-level await
+(async () => {
+  // If the client application has been closed while the server has worked, experiment statuses will be obsolete.
+  // So when starting the client application, experiments are fetched from the server.
+  // But if the server is newly started and there are no experiments, experiments stored in local storage will be used.
+  experiments = await getFromServer("/experiments");
+  if (experiments.length === 0) {
+    experiments = getFromLocalStorage(EXPERIMENTS_KEY);
+    if(experiments.length !== 0) {
+      for(const experiment of experiments) {
+        const data = await addExperiment(experiment);
+        console.log(data);
+      }
+    }
+  }
+
+  // Render table on page refresh
+  renderExperimentsTable();
+})();
 
 /**
  * Executes when adding a new experiment to the table.
@@ -205,7 +224,7 @@ backButton.addEventListener("click", () => {
  * First click will sort by the clicked column in ascending order and second click will sort in descending order and so on.
  */
 let asc = false;
-experimentsTable.querySelectorAll("th[data-sortable]").forEach((th, i) => {
+sortableTableHeaders.forEach((th, i) => {
   th.addEventListener("click", () => {
     const tbody = experimentsTable.querySelector("tbody");
     const rows = [...tbody.querySelectorAll("tr")];

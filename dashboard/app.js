@@ -94,6 +94,13 @@ app.use("/", express.static("./public"));
 app.use(express.json());
 
 /**
+ * Route that sends the server's experiments to the client to keep the front-end up to date
+ */
+app.get("/experiments", (req, res) => {
+  res.json(experiments);
+});
+
+/**
  * Route that requires a message body of a single experiment object in JSON-format.
  * The experiment object is added to the experiments array. 
  */
