@@ -31,7 +31,7 @@ const setExperimentStatus = (experimentId, status) => {
 
 const runExperiment = experimentId => {
   const experiment = getExperimentById(experimentId);
-  const { broker, producers, messages } = experiment;
+  const { broker, producers, messages, status } = experiment;
   const shFilePath = `./sh/${broker.toLowerCase()}-start-experiment.sh`;
   const shArgs = [producers, messages];
 
@@ -49,6 +49,31 @@ const runExperiment = experimentId => {
     console.log(`Experiment with id ${experimentId} is running.`);
     runningExperimentId = experimentId;
     experiment.status = Status.IN_PROGRESS;
+  });
+}
+
+const stopExperiment = experimentId => {
+  const experiment = getExperimentById(experimentId);
+  const { broker, producers, status } = experiment;
+  const shFilePath = `./sh/${broker.toLowerCase()}-stop-experiment.sh`;
+  const shArgs = [producers];
+
+  execFile(shFilePath, shArgs, (err, stdout, stderr) => {
+    if(err) {
+      console.log(`error: ${err.message}`);
+      return;
+    }
+    if(stderr) {
+      console.log(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`stdout: ${stdout}`);
+    runningExperiment = undefined;
+
+    // Here we need to have a way to determine if the experiment was successfully finished (Status.Completed)
+    // or if it was stopped during execution (Status.NOT_STARTED)
+    status = Status.COMPLETED;
+    nextExperiment();
   });
 }
 
