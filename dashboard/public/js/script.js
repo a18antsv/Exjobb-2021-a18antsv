@@ -27,6 +27,36 @@ const getFromLocalStorage = key => {
   return parsedValue === null ? [] : parsedValue;
 }
 
+/**
+ * Fetches data from passed route with the GET method and returns it in JSON format
+ * @param {String} route The route to fetch data from
+ * @returns {Object} An object with data properties
+ */
+const getFromServer = async route => {
+  const response = await fetch(route);
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * Sends data to the server using a post request
+ * @param {Stromg} route The post route to send data to
+ * @param {Object} json The JSON object to send
+ * @returns {Object} An object with data properties
+ */
+const postToServer = async (route, json) => {
+  const request = new Request(route, {
+    method: "POST",
+    body: JSON.stringify(json),
+    headers: {
+      "Content-Type": "application/json; charset=UTF-8"
+    }
+  });
+  const response = await fetch(request);
+  const data = await response.json();
+  return data;
+}
+
 const EXPERIMENTS_KEY = "experiments";
 let experiments = getFromLocalStorage(EXPERIMENTS_KEY);
 
