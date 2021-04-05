@@ -100,13 +100,14 @@ const manageExperiment = experimentId => {
 }
 
 /**
- * Puts an experiment in queue for execution (status="In queue").
- * The first experiment in queue will automatically execute (status="In progress").
+ * Puts an experiment in queue for execution by informing the server to queue the experiment id
  * @param {Number} experimentId The id of the experiment to queue
- * @todo ALL
+ * @returns {Object} An object with data properties
  */
-const queueExperiment = experimentId => {
-  console.log(`Queue experiment with id ${experimentId}`);
+const queueExperiment = async experimentId => {
+  const data = await postToServer("/queue", { experimentId });
+  console.log(data.message);
+  return data;
 }
 
 /**

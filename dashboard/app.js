@@ -113,6 +113,36 @@ app.post("/add", (req, res) => {
   });
 });
 
+app.post("/queue", (req, res) => {
+  const { experimentId } = req.body;
+  const experiment = getExperimentById(experimentId);
+
+  if(!experiment) {
+    res.json({ 
+      "message": `Could not find experiment with id ${experimentId}... Nothing added to queue.`
+    });
+    return;
+  }
+
+  if(experimentIdQueue.includes(experimentId)) {
+    res.json({
+      "message": `Experiment with id ${experimentId} is already in queue. Nothing added to queue.`  
+    });
+    return;
+  }
+
+  experiment.status = Status.IN_QUEUE;
+
+  // Add experiment id to the beginning of array to be able to use pop() to take from the end to simulate a queue
+  experimentIdQueue.unshift(experimentId);
+
+  res.json({
+    "message": `Added experiment with id ${experimentId} to queue.`
+  });
+
+  nextExperiment();
+});
+
 app.listen(port, () => {
   console.log(`Express app listening on port ${port}.`);
 });
