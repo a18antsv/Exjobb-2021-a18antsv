@@ -68,7 +68,7 @@ const stopExperiment = experimentId => {
       return;
     }
     console.log(`stdout: ${stdout}`);
-    runningExperiment = undefined;
+    runningExperimentId = undefined;
 
     // Here we need to have a way to determine if the experiment was successfully finished (Status.Completed)
     // or if it was stopped during execution (Status.NOT_STARTED)
@@ -78,7 +78,7 @@ const stopExperiment = experimentId => {
 }
 
 const nextExperiment = () => {
-  if(runningExperiment) {
+  if(runningExperimentId) {
     console.log("An experiment is already running... Cannot start another one.");
     return;
   }
@@ -106,10 +106,12 @@ app.get("/experiments", (req, res) => {
  */
 app.post("/add", (req, res) => {
   const experiment = req.body;
+  experiment.status = Status.NOT_STARTED;
   experiments.push(experiment);
-  console.log(`Added experiment with id ${experiment.experimentId} to experiments array.`);
   res.json({
-    "message": `Added experiment with id ${experiment.experimentId} to server experiments array.`
+    "message": `Added experiment with id ${experiment.experimentId} to server experiments array.`,
+    "success": true,
+    "experiments": experiments
   });
 });
 
@@ -128,7 +130,7 @@ app.post("/delete", (req, res) => {
   }
 
   experiments.splice(indexToDelete, 1);
-  
+
   res.json({
     "message": `Deleted experiment with id ${experimentId} from experiments array.`,
     "success": true,
@@ -142,14 +144,16 @@ app.post("/queue", (req, res) => {
 
   if(!experiment) {
     res.json({ 
-      "message": `Could not find experiment with id ${experimentId}... Nothing added to queue.`
+      "message": `Could not find experiment with id ${experimentId}... Nothing added to queue.`,
+      "success": false
     });
     return;
   }
 
   if(experimentIdQueue.includes(experimentId)) {
     res.json({
-      "message": `Experiment with id ${experimentId} is already in queue. Nothing added to queue.`  
+      "message": `Experiment with id ${experimentId} is already in queue. Nothing added to queue.`,
+      "success": false  
     });
     return;
   }
@@ -160,7 +164,8 @@ app.post("/queue", (req, res) => {
   experimentIdQueue.unshift(experimentId);
 
   res.json({
-    "message": `Added experiment with id ${experimentId} to queue.`
+    "message": `Added experiment with id ${experimentId} to queue.`,
+    "success": true
   });
 
   nextExperiment();

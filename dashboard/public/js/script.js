@@ -62,16 +62,18 @@ const postToServer = async (route, json) => {
 }
 
 /**
- * Adds an experiment to the experiments array on client and sends it to the server as well
+ * Adds an experiment by sending it to the server and using the response experiments array
  * @param {Object} experiment The experiment to add
- * @returns {Object} An object with data properties
  */
 const addExperiment = async experiment => {
-  experiments.push(experiment);
-  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
   const data = await postToServer("/add", experiment);
   console.log(data.message);
-  return data;
+  if(!data.success) {
+    return;
+  }
+  experiments = data.experiments;
+  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
+  renderExperimentsTable();
 }
 
 /**
@@ -170,8 +172,7 @@ const renderExperimentsTable = () => {
     experiments = getFromLocalStorage(EXPERIMENTS_KEY);
     if(experiments.length !== 0) {
       for(const experiment of experiments) {
-        const data = await addExperiment(experiment);
-        console.log(data);
+        await addExperiment(experiment);
       }
     }
   }
@@ -199,7 +200,7 @@ newExperimentForm.addEventListener("submit", async e => {
     broker,
     producers,
     messages,
-    status: "Not started"
+    status: ""
   };
 
   await addExperiment(experiment);
