@@ -61,6 +61,19 @@ const EXPERIMENTS_KEY = "experiments";
 let experiments = getFromLocalStorage(EXPERIMENTS_KEY);
 
 /**
+ * Adds an experiment to the experiments array on client and sends it to the server as well
+ * @param {Object} experiment The experiment to add
+ * @returns {Object} An object with data properties
+ */
+const addExperiment = async experiment => {
+  experiments.push(experiment);
+  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
+  const data = await postToServer("/add", experiment);
+  console.log(data.message);
+  return data;
+}
+
+/**
  * Deletes an experiment from the experiments array based on experiment id.
  * Saves the new array to local storage and rerenders the table.
  * @param {Number} experimentId The id of the experiment to delete
@@ -149,7 +162,7 @@ renderExperimentsTable(); // Render the table on page refresh
  * Creates a new experiment object, adds it to the experiments array and saves the array to local storage.
  * Rerenders table.
  */
-newExperimentForm.addEventListener("submit", e => {
+newExperimentForm.addEventListener("submit", async e => {
   e.preventDefault();
   
   const experimentName = document.querySelector(`[name="experimentName"]`).value;
@@ -165,8 +178,9 @@ newExperimentForm.addEventListener("submit", e => {
     messages,
     status: "Not started"
   };
-  experiments.push(experiment);
-  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
+
+  await addExperiment(experiment);
+
   renderExperimentsTable();
 });
 

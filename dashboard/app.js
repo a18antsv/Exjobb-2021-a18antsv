@@ -91,6 +91,20 @@ const nextExperiment = () => {
 }
 
 app.use("/", express.static("./public"));
+app.use(express.json());
+
+/**
+ * Route that requires a message body of a single experiment object in JSON-format.
+ * The experiment object is added to the experiments array. 
+ */
+app.post("/add", (req, res) => {
+  const experiment = req.body;
+  experiments.push(experiment);
+  console.log(`Added experiment with id ${experiment.experimentId} to experiments array.`);
+  res.json({
+    "message": `Added experiment with id ${experiment.experimentId} to server experiments array.`
+  });
+});
 
 app.listen(port, () => {
   console.log(`Express app listening on port ${port}.`);
