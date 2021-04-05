@@ -2,6 +2,7 @@
 
 # Parameters passed into the script
 PRODUCERS=${1:-1} # The number of producer containers to spin up (First argument passed to script or default if not passed)
+MESSAGES=${2:-10000} # The number of messages each producer should produce (Second argument passed to script or default if not passed)
 
 # Create and run RabbitMQ container based on the official RabbitMQ image including management UI.
 docker run -d \
@@ -23,6 +24,7 @@ for ((i = 1; i <= $PRODUCERS; i++))
 do
   docker run -d \
   --name rabbitmq-producer-service-$i \
+  -e NUMBER_OF_MESSAGES=$MESSAGES \
   --net common-network \
   rabbitmq-producer-image
 done
