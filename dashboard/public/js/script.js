@@ -75,14 +75,17 @@ const addExperiment = async experiment => {
 }
 
 /**
- * Deletes an experiment from the experiments array based on experiment id.
+ * Deletes an experiment based on experiment id.
  * Saves the new array to local storage and rerenders the table.
  * @param {Number} experimentId The id of the experiment to delete
  */
-const deleteExperiment = experimentId => {
-  experiments = experiments.filter(experiment => {
-    return experiment.experimentId !== experimentId;
-  });
+const deleteExperiment = async experimentId => {
+  const data = await postToServer("/delete", { experimentId });
+  console.log(data.message);
+  if(!data.success) {
+    return;
+  }
+  experiments = data.experiments;
   saveToLocalStorage(EXPERIMENTS_KEY, experiments);
   renderExperimentsTable();
 }

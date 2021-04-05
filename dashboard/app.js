@@ -113,6 +113,29 @@ app.post("/add", (req, res) => {
   });
 });
 
+app.post("/delete", (req, res) => {
+  const { experimentId } = req.body;
+  const indexToDelete = experiments.findIndex(experiment => {
+    return experiment.experimentId === experimentId;
+  });
+
+  if(indexToDelete === -1) {
+    res.json({ 
+      "message": `Could not find experiment with id ${experimentId}... Nothing deleted.`,
+      "success": false
+    });
+    return;
+  }
+
+  experiments.splice(indexToDelete, 1);
+  
+  res.json({
+    "message": `Deleted experiment with id ${experimentId} from experiments array.`,
+    "success": true,
+    "experiments": experiments
+  });
+});
+
 app.post("/queue", (req, res) => {
   const { experimentId } = req.body;
   const experiment = getExperimentById(experimentId);
