@@ -1,4 +1,5 @@
 import express from "express";
+import { execFile } from "child_process";
 
 const app = express();
 const port = 3000;
@@ -29,7 +30,26 @@ const setExperimentStatus = (experimentId, status) => {
 }
 
 const runExperiment = experimentId => {
-  runningExperimentId = experimentId;
+  const experiment = getExperimentById(experimentId);
+  const { broker, producers, messages } = experiment;
+  const shFilePath = `./sh/${broker.toLowerCase()}-start-experiment.sh`;
+  const shArgs = [producers, messages];
+
+  console.log(`Starting experiment with id ${experimentId}...`);
+  execFile(shFilePath, shArgs, (err, stdout, stderr) => {
+    if(err) {
+      console.log(`error: ${err.message}`);
+      return;
+    }
+    if(stderr) {
+      console.log(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`stdout (Docker container ids): ${stdout}`);
+    console.log(`Experiment with id ${experimentId} is running.`);
+    runningExperimentId = experimentId;
+    experiment.status = Status.IN_PROGRESS;
+  });
 }
 
 const nextExperiment = () => {
