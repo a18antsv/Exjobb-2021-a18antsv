@@ -165,7 +165,8 @@ app.post("/queue", (req, res) => {
 
   res.json({
     "message": `Added experiment with id ${experimentId} to queue.`,
-    "success": true
+    "success": true,
+    "experiments": experiments
   });
 
   nextExperiment();

@@ -112,7 +112,12 @@ const manageExperiment = experimentId => {
 const queueExperiment = async experimentId => {
   const data = await postToServer("/queue", { experimentId });
   console.log(data.message);
-  return data;
+  if(!data.success) {
+    return;
+  }
+  experiments = data.experiments;
+  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
+  renderExperimentsTable();
 }
 
 /**
