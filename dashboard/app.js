@@ -16,19 +16,21 @@ let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
 
+/**
+ * Gets an experiment from the experiments array based on its id.
+ * @param {String} experimentId The id of the experiment to find
+ * @returns {Object} The experiment with the passed id or undefined
+ */
 const getExperimentById = experimentId => {
   return experiments.find(experiment => experiment.experimentId === experimentId);
 }
 
-const setExperimentStatus = (experimentId, status) => {
-  const experiment = getExperimentById(experimentId);
-  if(!experiment) {
-    console.log(`Could not find experiment with id ${experimentId}`);
-    return;
-  }
-  experiment.status = status;
-}
-
+/**
+ * Runs a new experiment by running a bash script that starts all neccessary Docker containers for the experiment's broker.
+ * Parameters for producers and number of messages are passed to the bash script to determine how many 
+ * producer containers that should be spun up and how many messages each container should produce.
+ * @param {String} experimentId The id of the experiment to start
+ */
 const runExperiment = experimentId => {
   const experiment = getExperimentById(experimentId);
   const { broker, producers, messages, status } = experiment;
@@ -52,7 +54,16 @@ const runExperiment = experimentId => {
   });
 }
 
+/**
+ * Stops a running experiment, if there is one, by running a bash script that removes all running Docker containers
+ * @param {String} experimentId The id of the experiment to stop 
+ */
 const stopExperiment = experimentId => {
+  if(!runningExperimentId) {
+    console.log("No experiment is running... Nothing to stop.");
+    return;
+  }
+
   const experiment = getExperimentById(experimentId);
   const { broker, producers, status } = experiment;
   const shFilePath = `./sh/${broker.toLowerCase()}-stop-experiment.sh`;
@@ -77,6 +88,10 @@ const stopExperiment = experimentId => {
   });
 }
 
+/**
+ * Runs the next experiment in the queue if there is no experiment currently running
+ * and if there is an experiment available in the queue.
+ */
 const nextExperiment = () => {
   if(runningExperimentId) {
     console.log("An experiment is already running... Cannot start another one.");
