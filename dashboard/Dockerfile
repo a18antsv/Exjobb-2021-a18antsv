@@ -18,6 +18,9 @@ RUN npm install
 # Copy the rest of the files in the same directory as the Dockerfile to the set image working directory
 COPY ./dashboard ./
 
+# Copy shell scripts into container (build scripts cannot be used as the application files do not exist in the container)
+COPY ./sh/ ./sh/
+
 # Documentation purpose for which ports are intended to be exposed by container instance
 EXPOSE 3000
 
