@@ -41,6 +41,7 @@ for ((i = 1; i <= $PRODUCERS; i++))
 do
   docker run -d \
   --name kafka-producer-service-$i \
+  -e STATION_ID=producer-service-$i \
   -e NUMBER_OF_MESSAGES=$MESSAGES \
   --net common-network \
   kafka-producer-image

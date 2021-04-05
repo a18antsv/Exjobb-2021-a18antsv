@@ -12,15 +12,15 @@ let previousConcentrations;
 // Properties included in air quality data point that never changes for an air quality sensor station
 // Will be merged into each air quality data point
 const defaultStationProperties = {
-  stationId: "air-station-01",
+  stationId: process.env.STATION_ID || "producer-service-1",
   coordinates: {
-    lat: 37.5665,
-    long: 126.9780
+    lat: process.env.LAT || 37.5665,
+    long: process.env.LONG || 126.9780
   }
 }
 
 const kafka = new Kafka({
-  clientId: "producer-service-1",
+  clientId: defaultStationProperties.stationId,
   brokers: [ 
     "kafka-broker-1:9092" 
   ]
