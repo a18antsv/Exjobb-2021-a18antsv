@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Parameters passed into the script
+PRODUCERS=${1:-1} # The number of producer containers to spin up (First argument passed to script or default if not passed)
+
 # Create and run RabbitMQ container based on the official RabbitMQ image including management UI.
 docker run -d \
 --name rabbit-node-1 \
@@ -15,8 +18,11 @@ docker run -d \
 --net common-network \
 rabbitmq-consumer-image
 
-# Create and run one container instance of the RabbitMQ producer image
-docker run -d \
---name rabbitmq-producer-service-1 \
---net common-network \
-rabbitmq-producer-image
+# Create and run a number of RabbitMQ producer containers depending on passed argument
+for ((i = 1; i <= $PRODUCERS; i++))
+do
+  docker run -d \
+  --name rabbitmq-producer-service-$i \
+  --net common-network \
+  rabbitmq-producer-image
+done

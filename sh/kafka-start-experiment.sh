@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Parameters passed into the script
+PRODUCERS=${1:-1} # The number of producer containers to spin up (First argument passed to script or default if not passed)
+
 # Create and run Zookeeper container based on official Zookeeper image from Docker Hub
 docker run -d \
 --name zookeeper-node-1 \
@@ -32,8 +35,11 @@ docker run -d \
 --net common-network \
 kafka-consumer-image
 
-# Create and run one container instance of the Kafka producer image
-docker run -d \
---name kafka-producer-service-1 \
---net common-network \
-kafka-producer-image
+# Create and run a number of Kafka producer containers depending on passed argument
+for ((i = 1; i <= $PRODUCERS; i++))
+do
+  docker run -d \
+  --name kafka-producer-service-$i \
+  --net common-network \
+  kafka-producer-image
+done
