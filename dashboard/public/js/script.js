@@ -134,7 +134,14 @@ const dequeueExperiment = async experimentId => {
 }
 
 const stopExperiment = async experimentId => {
-  console.log(`Stop ${experimentId}`);
+  const data = await postToServer("/stop", { experimentId });
+  console.log(data.message);
+  if(!data.success) {
+    return;
+  }
+  experiments = data.experiments;
+  saveToLocalStorage(EXPERIMENTS_KEY, experiments);
+  renderExperimentsTable();
 }
 
 /**

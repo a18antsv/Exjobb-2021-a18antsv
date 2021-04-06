@@ -35,7 +35,11 @@ const getExperimentById = experimentId => {
  */
 const runExperiment = experimentId => {
   const experiment = getExperimentById(experimentId);
-  const { broker, producers, messages, status } = experiment;
+  const { broker, producers, messages } = experiment;
+  experiment.status = Status.IN_PROGRESS;
+  experimentsVersionGlobal++;
+  runningExperimentId = experimentId;
+
   const shFilePath = `./sh/${broker.toLowerCase()}-start-experiment.sh`;
   const shArgs = [producers, messages];
 
@@ -51,9 +55,6 @@ const runExperiment = experimentId => {
     }
     console.log(`stdout (Docker container ids): ${stdout}`);
     console.log(`Experiment with id ${experimentId} is running.`);
-    runningExperimentId = experimentId;
-    experiment.status = Status.IN_PROGRESS;
-    experimentsVersionGlobal++;
   });
 }
 
@@ -61,7 +62,7 @@ const runExperiment = experimentId => {
  * Stops a running experiment, if there is one, by running a bash script that removes all running Docker containers
  * @param {String} experimentId The id of the experiment to stop 
  */
-const stopExperiment = experimentId => {
+const stopExperiment = (experimentId, isForced = false) => {
   if(!runningExperimentId) {
     console.log("No experiment is running... Nothing to stop.");
     return;
@@ -82,11 +83,13 @@ const stopExperiment = experimentId => {
       return;
     }
     console.log(`stdout: ${stdout}`);
-    runningExperimentId = undefined;
 
-    // Here we need to have a way to determine if the experiment was successfully finished (Status.Completed)
-    // or if it was stopped during execution (Status.NOT_STARTED)
-    status = Status.COMPLETED;
+    if(isForced) {
+      experiment.status = Status.NOT_STARTED;
+    } else {
+      experiment.status = Status.COMPLETED;
+    }
+    runningExperimentId = undefined;
     experimentsVersionGlobal++;
     nextExperiment();
   });
@@ -201,7 +204,7 @@ app.post("/dequeue", (req, res) => {
 
   if(!experiment) {
     res.json({ 
-      "message": `Could not find experiment with id ${experimentId}... No experimient dequeued.`,
+      "message": `Could not find experiment with id ${experimentId}... No experiment dequeued.`,
       "success": false
     });
     return;
@@ -221,6 +224,45 @@ app.post("/dequeue", (req, res) => {
 
   res.json({
     "message": `Removed experiment with id ${experimentId} from queue.`,
+    "success": true,
+    "experiments": experiments
+  });
+});
+
+app.post("/stop", (req, res) => {
+  const { experimentId } = req.body;
+  const experiment = getExperimentById(experimentId);
+
+  if(!experiment) {
+    res.json({ 
+      "message": `Could not find experiment with id ${experimentId}... No experiment stopped.`,
+      "success": false
+    });
+    return;
+  }
+
+  if(!runningExperimentId) {
+    res.json({
+      "message": `There is currently no experiment running... No experiment stopped.`,
+      "success": false  
+    });
+    return;
+  }
+
+  if(runningExperimentId !== experimentId) {
+    res.json({
+      "message": `Experiment id ${experimentId} does not match with the currently running experiment... Could not stop.`,
+      "success": false  
+    });
+    return;
+  }
+
+  // Remove experiment from queue
+  stopExperiment(experimentId, true);
+  experiment.status = Status.NOT_STARTED;
+
+  res.json({
+    "message": `Stopped running experiment with id ${experimentId}.`,
     "success": true,
     "experiments": experiments
   });
