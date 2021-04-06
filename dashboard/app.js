@@ -15,6 +15,7 @@ const Status = {
 let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
+let experimentsVersionGlobal = 0; // Incremented after experiment status change to detect when to send SSE update to client
 
 /**
  * Gets an experiment from the experiments array based on its id.
@@ -51,6 +52,7 @@ const runExperiment = experimentId => {
     console.log(`Experiment with id ${experimentId} is running.`);
     runningExperimentId = experimentId;
     experiment.status = Status.IN_PROGRESS;
+    experimentsVersionGlobal++;
   });
 }
 
@@ -84,6 +86,7 @@ const stopExperiment = experimentId => {
     // Here we need to have a way to determine if the experiment was successfully finished (Status.Completed)
     // or if it was stopped during execution (Status.NOT_STARTED)
     status = Status.COMPLETED;
+    experimentsVersionGlobal++;
     nextExperiment();
   });
 }
@@ -199,14 +202,18 @@ app.post("/consumed", (req, res) => {
  * A connection with the client will always be open to make it possible to constantly send consumed data and status updates.
  */
 app.get("/events", (req, res) => {
+  let experimentsVersionLocal = 0; // Compared with global experiments version to determine if there is a newer version to send or not
   res.set({
     "Content-Type": "text/event-stream; charset=utf-8",
     "Connection": "keep-alive",
     "Cache-Control": "no-cache"
   });
   setInterval(() => {
-    res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
-  }, 3000);
+    if(experimentsVersionLocal < experimentsVersionGlobal) {
+      res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
+      experimentsVersionLocal = experimentsVersionGlobal;
+    }
+  }, 1000);
 });
 
 app.listen(port, () => {
