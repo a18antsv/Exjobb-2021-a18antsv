@@ -122,6 +122,14 @@ const queueExperiment = async experimentId => {
   renderExperimentsTable();
 }
 
+const dequeueExperiment = async experimentId => {
+  console.log(`Dequeue ${experimentId}`);
+}
+
+const stopExperiment = async experimentId => {
+  console.log(`Stop ${experimentId}`);
+}
+
 /**
  * Renders the available experiments table based on array of experiments loaded from local storage.
  * Updates available experiment counter.
@@ -167,6 +175,16 @@ const renderExperimentsTable = () => {
         text: "Q",
         clazz: "queue",
         func: queueExperiment
+      },
+      {
+        text: "DQ",
+        clazz: "dequeue",
+        func: dequeueExperiment
+      },
+      {
+        text: "S",
+        clazz: "stop",
+        func: stopExperiment
       },
       {
         text: "D",

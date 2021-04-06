@@ -103,8 +103,16 @@ body {
   background-color: #E9C46A;
 }
 
+.dequeue {
+  background-color: #F4A261;
+}
+
 .manage {
   background-color: #ddefff;
+}
+
+.stop {
+  background-color: #E76F51;
 }
 
 table {
