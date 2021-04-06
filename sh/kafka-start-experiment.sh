@@ -33,6 +33,8 @@ wurstmeister/kafka:2.13-2.7.0
 # Create and run one container instance of the Kafka consumer image
 docker run -d \
 --name kafka-consumer-service-1 \
+-e NUMBER_OF_PRODUCERS=$PRODUCERS \
+-e NUMBER_OF_MESSAGES=$MESSAGES \
 --net common-network \
 kafka-consumer-image
 

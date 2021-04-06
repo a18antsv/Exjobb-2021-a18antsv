@@ -275,6 +275,10 @@ app.post("/consumed", (req, res) => {
   consumedMessages.push(req.body);
 });
 
+app.post("/completed", (req, res) => {
+  stopExperiment(runningExperimentId, false);
+});
+
 /**
  * This route is used for Server-Sent Events (SSE).
  * A connection with the client will always be open to make it possible to constantly send consumed data and status updates.

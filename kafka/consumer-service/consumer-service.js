@@ -5,6 +5,11 @@ import {
 } from "./shared/utils.js";
 
 const TOPIC_NAME = "air-quality-observation-topic";
+const NUMBER_OF_PRODUCERS = process.env.NUMBER_OF_PRODUCERS || 1;
+const NUMBER_OF_MESSAGES = process.env.NUMBER_OF_MESSAGES || 10_000;
+const TOTAL_NUMBER_OF_MESSAGES = NUMBER_OF_PRODUCERS * NUMBER_OF_MESSAGES;
+
+let consumedMessageIndex = 0;
 
 const kafka = new Kafka({
   clientId: "consumer-service-1",
@@ -36,6 +41,7 @@ const consumer = kafka.consumer({
   // Run consumer and handle one message at a time
   await handler(consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
+      consumedMessageIndex++;
       const { stationId, timestamp, coordinates, concentrations } = JSON.parse(message.value.toString());
       console.log(`Consumed air quality observation from station with id ${stationId}. MO=${message.offset}, P=${partition} T=${topic} K=${message.key.toString()}.`);
 
@@ -52,6 +58,16 @@ const consumer = kafka.consumer({
       });
       request.write(data);
       request.end();
+
+      if(consumedMessageIndex >= TOTAL_NUMBER_OF_MESSAGES) {
+        const request = http.request({
+          hostname: "dashboard-app",
+          port: 3000,
+          path: "/completed",
+          method: "POST",
+        });
+        request.end();
+      }
     }
   }));
 })();
