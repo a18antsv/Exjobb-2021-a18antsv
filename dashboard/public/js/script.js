@@ -160,18 +160,29 @@ const renderExperimentsTable = () => {
       status 
     } = experiment;
 
-    tbody.innerHTML += `
-      <tr data-experiment-id="${experimentId}">
-        <td>${experimentName}</td>
-        <td>${broker}</td>
-        <td>${producers}</td>
-        <td>${messages}</td>
-        <td>${status}</td>
-        <td class="button-container"></td>
-      </tr>
-    `;
+    const row = document.createElement("tr");
+    const tdName = document.createElement("td");
+    const tdBroker = document.createElement("td");
+    const tdProducers = document.createElement("td");
+    const tdMessages = document.createElement("td");
+    const tdStatus = document.createElement("td");
+    const buttonContainer = document.createElement("td");
+    row.dataset.experimentId = experimentId;
+    tdName.innerText = experimentName;
+    tdBroker.innerText = broker;
+    tdProducers.innerText = producers;
+    tdMessages.innerText = messages;
+    tdStatus.innerText = status;
+    buttonContainer.classList.add("button-container");
 
-    const buttonContainer = tbody.querySelector(`[data-experiment-id='${experimentId}'] .button-container`);
+    row.appendChild(tdName);
+    row.appendChild(tdBroker);
+    row.appendChild(tdProducers);
+    row.appendChild(tdMessages);
+    row.appendChild(tdStatus);
+    row.appendChild(buttonContainer);
+    tbody.appendChild(row);
+
     const buttonObjects = [
       {
         text: "M",
