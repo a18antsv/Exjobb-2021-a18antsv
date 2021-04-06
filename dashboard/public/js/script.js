@@ -169,31 +169,41 @@ const renderExperimentsTable = () => {
       {
         text: "M",
         clazz: "manage",
-        func: manageExperiment
+        func: manageExperiment,
+        showOnStatuses: [Status.IN_PROGRESS, Status.COMPLETED]
       },
       {
         text: "Q",
         clazz: "queue",
-        func: queueExperiment
+        func: queueExperiment,
+        showOnStatuses: [Status.NOT_STARTED, Status.COMPLETED]
       },
       {
         text: "DQ",
         clazz: "dequeue",
-        func: dequeueExperiment
+        func: dequeueExperiment,
+        showOnStatuses: [Status.IN_QUEUE]
       },
       {
         text: "S",
         clazz: "stop",
-        func: stopExperiment
+        func: stopExperiment,
+        showOnStatuses: [Status.IN_PROGRESS]
       },
       {
         text: "D",
         clazz: "delete",
-        func: deleteExperiment
+        func: deleteExperiment,
+        showOnStatuses: [Status.NOT_STARTED, Status.COMPLETED]
       }
     ];
 
-    for(const { text, clazz, func } of buttonObjects) {
+    for(const { text, clazz, func, showOnStatuses } of buttonObjects) {
+      // Directly go to next iteration if the button should not be created for the experiment's current status
+      if(!showOnStatuses.includes(status)) {
+        continue;
+      }
+
       const buttonElement = document.createElement("div");
       buttonElement.innerText = text;
       buttonElement.classList.add("small-button", clazz);
