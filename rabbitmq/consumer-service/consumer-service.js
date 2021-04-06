@@ -8,6 +8,11 @@ import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 const QUEUE_NAME = "air-quality-observation-queue";
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
 const MAXIMUM_NUMBER_OF_RETRIES = 30;
+const NUMBER_OF_PRODUCERS = process.env.NUMBER_OF_PRODUCERS || 1;
+const NUMBER_OF_MESSAGES = process.env.NUMBER_OF_MESSAGES || 10_000;
+const TOTAL_NUMBER_OF_MESSAGES = NUMBER_OF_PRODUCERS * NUMBER_OF_MESSAGES;
+
+let consumedMessageIndex = 0;
 
 const amqpConnectionSettings = {
   protocol: "amqp",
@@ -37,6 +42,7 @@ const amqpConnectionSettings = {
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
   const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
+    consumedMessageIndex++;
     const { stationId, timestamp, coordinates, concentrations } = JSON.parse(messageObject.content.toString());
     console.log(`Consumed air quality observation from station with id ${stationId}.`);
 
@@ -54,8 +60,18 @@ const amqpConnectionSettings = {
     request.write(data);
     request.end();
 
-    // Acknowledge successful message consumtion to delete message from queue
+    // Acknowledge successful message consumption to delete message from queue
     channel.ack(messageObject);
+
+    if(consumedMessageIndex >= TOTAL_NUMBER_OF_MESSAGES) {
+      const request = http.request({
+        hostname: "dashboard-app",
+        port: 3000,
+        path: "/completed",
+        method: "POST",
+      });
+      request.end();
+    }
   }));
   if(consumeError) {
     console.log(`Could not consume from queue ${QUEUE_NAME}`);

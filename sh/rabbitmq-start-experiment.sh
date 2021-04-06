@@ -16,6 +16,8 @@ rabbitmq:3.8.14-management
 # Create and run one container instance of the RabbitMQ consumer image
 docker run -d \
 --name rabbitmq-consumer-service-1 \
+-e NUMBER_OF_PRODUCERS=$PRODUCERS \
+-e NUMBER_OF_MESSAGES=$MESSAGES \
 --net common-network \
 rabbitmq-consumer-image
 
