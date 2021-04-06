@@ -8,6 +8,7 @@ const sortableTableHeaders = experimentsTable.querySelectorAll("th[data-sortable
 
 const EXPERIMENTS_KEY = "experiments";
 const eventSource = new EventSource("/events"); // Open Server-Sent Events (SSE) connection to server for constant status updates and data transfer
+let Status = {};
 let experiments = [];
 
 /**
@@ -170,6 +171,9 @@ const renderExperimentsTable = () => {
 
 // Self invoking async function to be able to use top-level await
 (async () => {
+  // Get available experiment status codes from the server to be able to recognize statuses and render different things based on them.
+  Status = await getFromServer("/status"); 
+
   // If the client application has been closed while the server has worked, experiment statuses will be obsolete.
   // So when starting the client application, experiments are fetched from the server.
   // But if the server is newly started and there are no experiments, experiments stored in local storage will be used.

@@ -112,6 +112,10 @@ const nextExperiment = () => {
 app.use("/", express.static("./public"));
 app.use(express.json());
 
+app.get("/status", (req, res) => {
+  res.json(Status);
+});
+
 /**
  * Route that sends the server's experiments to the client to keep the front-end up to date
  */
