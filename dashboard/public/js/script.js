@@ -152,13 +152,36 @@ const renderExperimentsTable = () => {
         <td>${producers}</td>
         <td>${messages}</td>
         <td>${status}</td>
-        <td class="button-container">
-          <div class="small-button manage" onclick="manageExperiment(${experimentId});">M</div>
-          <div class="small-button queue" onclick="queueExperiment(${experimentId});">Q</div>
-          <div class="small-button delete" onclick="deleteExperiment(${experimentId});">D</div>
-        </td>
+        <td class="button-container"></td>
       </tr>
     `;
+
+    const buttonContainer = tbody.querySelector(`[data-experiment-id='${experimentId}'] .button-container`);
+    const buttonObjects = [
+      {
+        text: "M",
+        clazz: "manage",
+        func: manageExperiment
+      },
+      {
+        text: "Q",
+        clazz: "queue",
+        func: queueExperiment
+      },
+      {
+        text: "D",
+        clazz: "delete",
+        func: deleteExperiment
+      }
+    ];
+
+    for(const { text, clazz, func } of buttonObjects) {
+      const buttonElement = document.createElement("div");
+      buttonElement.innerText = text;
+      buttonElement.classList.add("small-button", clazz);
+      buttonElement.addEventListener("click", () => func(experimentId));
+      buttonContainer.appendChild(buttonElement);
+    }
   });
 
   // Update available experiments counter
