@@ -187,6 +187,13 @@ app.post("/queue", (req, res) => {
   nextExperiment();
 });
 
+/**
+ * This route is used to receive consumed messages from consumer services.
+ */
+app.post("/consumed", (req, res) => {
+  console.log(req.body);
+});
+
 app.listen(port, () => {
   console.log(`Express app listening on port ${port}.`);
 });

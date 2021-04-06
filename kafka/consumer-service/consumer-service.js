@@ -1,4 +1,5 @@
 import { Kafka } from "kafkajs";
+import http from "http";
 import { 
   promiseHandler as handler
 } from "./shared/utils.js";
@@ -35,14 +36,22 @@ const consumer = kafka.consumer({
   // Run consumer and handle one message at a time
   await handler(consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      const { 
-        stationId,
-        timestamp,
-        coordinates,
-        concentrations
-      } = JSON.parse(message.value.toString());
-
+      const { stationId, timestamp, coordinates, concentrations } = JSON.parse(message.value.toString());
       console.log(`Consumed air quality observation from station with id ${stationId}. MO=${message.offset}, P=${partition} T=${topic} K=${message.key.toString()}.`);
+
+      const data = message.value.toString();
+      const request = http.request({
+        hostname: "dashboard-app",
+        port: 3000,
+        path: "/consumed",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": data.length
+        }
+      });
+      request.write(data);
+      request.end();
     }
   }));
 })();

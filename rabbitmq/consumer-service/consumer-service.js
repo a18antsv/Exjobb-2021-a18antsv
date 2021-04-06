@@ -1,4 +1,5 @@
 import amqp from "amqplib";
+import http from "http";
 import { 
   promiseHandler as handler
 } from "./shared/utils.js";
@@ -36,13 +37,22 @@ const amqpConnectionSettings = {
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
   const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
-    const { 
-      stationId,
-      timestamp,
-      coordinates,
-      concentrations
-    } = JSON.parse(messageObject.content.toString());
+    const { stationId, timestamp, coordinates, concentrations } = JSON.parse(messageObject.content.toString());
     console.log(`Consumed air quality observation from station with id ${stationId}.`);
+
+    const data = messageObject.content.toString()
+    const request = http.request({
+      hostname: "dashboard-app",
+      port: 3000,
+      path: "/consumed",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": data.length
+      }
+    });
+    request.write(data);
+    request.end();
 
     // Acknowledge successful message consumtion to delete message from queue
     channel.ack(messageObject);
