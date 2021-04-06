@@ -7,6 +7,7 @@ const backButton = document.querySelector(".back-button");
 const sortableTableHeaders = experimentsTable.querySelectorAll("th[data-sortable]");
 
 const EXPERIMENTS_KEY = "experiments";
+const eventSource = new EventSource("/events"); // Open Server-Sent Events (SSE) connection to server for constant status updates and data transfer
 let experiments = [];
 
 /**
@@ -185,6 +186,16 @@ const renderExperimentsTable = () => {
   // Render table on page refresh
   renderExperimentsTable();
 })();
+
+/**
+ * SSE event that fires when an experiment's status has been changed and not yet been
+ * updated on the client side from another server response on a direct request (e.g. addExperiment, deleteExperiment, queueExperiment)
+ */
+eventSource.addEventListener("status-update", e => {
+  console.log(JSON.parse(e.data));
+  experiments = JSON.parse(e.data);
+  renderExperimentsTable();
+});
 
 /**
  * Executes when adding a new experiment to the table.

@@ -194,6 +194,21 @@ app.post("/consumed", (req, res) => {
   console.log(req.body);
 });
 
+/**
+ * This route is used for Server-Sent Events (SSE).
+ * A connection with the client will always be open to make it possible to constantly send consumed data and status updates.
+ */
+app.get("/events", (req, res) => {
+  res.set({
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Connection": "keep-alive",
+    "Cache-Control": "no-cache"
+  });
+  setInterval(() => {
+    res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
+  }, 3000);
+});
+
 app.listen(port, () => {
   console.log(`Express app listening on port ${port}.`);
 });
