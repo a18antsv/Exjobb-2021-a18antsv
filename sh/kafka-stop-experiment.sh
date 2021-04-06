@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PRODUCERS=${1:-1} # The number of producer containers that should be stopped and removed
+
 # Remove all producer containers by force
 for ((i = 1; i <= $PRODUCERS; i++))
 do
