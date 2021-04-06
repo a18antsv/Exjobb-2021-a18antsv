@@ -195,6 +195,37 @@ app.post("/queue", (req, res) => {
   nextExperiment();
 });
 
+app.post("/dequeue", (req, res) => {
+  const { experimentId } = req.body;
+  const experiment = getExperimentById(experimentId);
+
+  if(!experiment) {
+    res.json({ 
+      "message": `Could not find experiment with id ${experimentId}... No experimient dequeued.`,
+      "success": false
+    });
+    return;
+  }
+
+  if(!experimentIdQueue.includes(experimentId)) {
+    res.json({
+      "message": `Experiment with id ${experimentId} is not in queue... No experiment dequeued.`,
+      "success": false  
+    });
+    return;
+  }
+
+  // Remove experiment from queue
+  experimentIdQueue.splice(experimentIdQueue.indexOf(experimentId), 1);
+  experiment.status = Status.NOT_STARTED;
+
+  res.json({
+    "message": `Removed experiment with id ${experimentId} from queue.`,
+    "success": true,
+    "experiments": experiments
+  });
+});
+
 /**
  * This route is used to receive consumed messages from consumer services.
  */
