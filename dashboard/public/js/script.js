@@ -198,6 +198,13 @@ eventSource.addEventListener("status-update", e => {
 });
 
 /**
+ * SSE event that fires when the server decides to sends consumed messages received from the consumer.
+ */
+eventSource.addEventListener("message", e => {
+  console.log(JSON.parse(e.data));
+});
+
+/**
  * Executes when adding a new experiment to the table.
  * Creates a new experiment object, adds it to the experiments array and saves the array to local storage.
  * Rerenders table.
