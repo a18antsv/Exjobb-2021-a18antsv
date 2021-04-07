@@ -281,7 +281,8 @@ eventSource.addEventListener("status-update", e => {
  * SSE event that fires when the server decides to sends consumed messages received from the consumer.
  */
 eventSource.addEventListener("message", e => {
-  console.log(JSON.parse(e.data));
+  const aggregations = e.data;
+  console.log(aggregations);
 });
 
 /**

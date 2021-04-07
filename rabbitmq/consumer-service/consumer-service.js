@@ -4,6 +4,10 @@ import {
   promiseHandler as handler
 } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
+import {
+  aggregations,
+  saveMessage
+} from "./shared/aggregations.js";
 
 const QUEUE_NAME = "air-quality-observation-queue";
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
@@ -11,6 +15,7 @@ const MAXIMUM_NUMBER_OF_RETRIES = 30;
 const NUMBER_OF_PRODUCERS = process.env.NUMBER_OF_PRODUCERS || 1;
 const NUMBER_OF_MESSAGES = process.env.NUMBER_OF_MESSAGES || 10_000;
 const TOTAL_NUMBER_OF_MESSAGES = NUMBER_OF_PRODUCERS * NUMBER_OF_MESSAGES;
+const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 5_000;
 
 let consumedMessageIndex = 0;
 
@@ -39,29 +44,21 @@ const amqpConnectionSettings = {
   if(assertQueueError) {
     console.log("Could not create queue or assert queue existance.");
   }
-
-  console.log(`Consuming messages from ${QUEUE_NAME}...`);
-  const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
-    consumedMessageIndex++;
-    const { stationId, timestamp, coordinates, concentrations } = JSON.parse(messageObject.content.toString());
-    console.log(`Consumed air quality observation from station with id ${stationId}.`);
-
-    const data = messageObject.content.toString()
+  
+  setInterval(() => {
+    const data = JSON.stringify(aggregations);
     const request = http.request({
-      hostname: "dashboard-app",
+      hostname: 'dashboard-app',
       port: 3000,
-      path: "/consumed",
-      method: "POST",
+      path: '/aggregations',
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Content-Length": data.length
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
       }
     });
     request.write(data);
     request.end();
-
-    // Acknowledge successful message consumption to delete message from queue
-    channel.ack(messageObject);
 
     if(consumedMessageIndex >= TOTAL_NUMBER_OF_MESSAGES) {
       const request = http.request({
@@ -72,6 +69,18 @@ const amqpConnectionSettings = {
       });
       request.end();
     }
+  }, AGGREGATE_PUBLISH_RATE);
+
+  console.log(`Consuming messages from ${QUEUE_NAME}...`);
+  const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
+    //console.log(`Consumed air quality observation from station with id ${stationId}.`);
+    const message = JSON.parse(messageObject.content.toString());
+    consumedMessageIndex++;
+
+    // Acknowledge successful message consumption to delete message from queue
+    channel.ack(messageObject);
+
+    saveMessage(message);
   }));
   if(consumeError) {
     console.log(`Could not consume from queue ${QUEUE_NAME}`);

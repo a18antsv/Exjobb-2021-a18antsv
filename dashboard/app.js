@@ -16,7 +16,7 @@ let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
 let experimentsVersionGlobal = 0; // Incremented after experiment status change to detect when to send SSE update to client
-let consumedMessages = [];
+let aggregations = {};
 
 /**
  * Gets an experiment from the experiments array based on its id.
@@ -271,8 +271,8 @@ app.post("/stop", (req, res) => {
 /**
  * This route is used to receive consumed messages from consumer services.
  */
-app.post("/consumed", (req, res) => {
-  consumedMessages.push(req.body);
+app.post("/aggregations", (req, res) => {
+  aggregations = req.body;
 });
 
 app.post("/completed", (req, res) => {
@@ -300,8 +300,8 @@ app.get("/events", (req, res) => {
   }, 1000);
 
   setInterval(() => {
-    res.write(`event: message\ndata: ${JSON.stringify(consumedMessages)}\n\n`);
-  }, 3000);
+    res.write(`event: message\ndata: ${JSON.stringify(aggregations)}\n\n`);
+  }, 5000);
 });
 
 app.listen(port, () => {
