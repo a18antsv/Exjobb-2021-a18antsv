@@ -5,11 +5,13 @@ const newExperimentButton = document.querySelector(".button-new-experiment");
 const newExperimentForm = document.querySelector("#new-experiment-form");
 const backButton = document.querySelector(".back-button");
 const sortableTableHeaders = experimentsTable.querySelectorAll("th[data-sortable]");
+const chartCanvasElements = document.querySelectorAll(".chart");
 
 const EXPERIMENTS_KEY = "experiments";
 const eventSource = new EventSource("/events"); // Open Server-Sent Events (SSE) connection to server for constant status updates and data transfer
 let Status = {};
 let experiments = [];
+let charts = {};
 
 /**
  * Saves key/value pair in the browser's local storage.
@@ -358,4 +360,29 @@ sortableTableHeaders.forEach((th, i) => {
     }
     tbody.appendChild(rowNewExperiment);
   });
+});
+
+chartCanvasElements.forEach(chartCanvasElement => {
+  const ctx = chartCanvasElement.getContext("2d");
+  const pollutant = chartCanvasElement.dataset.pollutant;
+
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  charts[pollutant] = chart;
 });
