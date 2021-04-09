@@ -13,7 +13,6 @@ const BINDING_KEY = "air-quality-observation-binding";
 const ROUTING_KEY = BINDING_KEY;
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
 const MAXIMUM_NUMBER_OF_RETRIES = 30;
-const NUMBER_OF_MESSAGES = process.env.NUMBER_OF_MESSAGES || 10_000;
 let previousConcentrations;
 
 // Properties included in air quality data point that never changes for an air quality sensor station
@@ -66,16 +65,17 @@ const amqpConnectionSettings = {
     console.error("Could not bind queue to exchange");
   }
 
-  for(let i = 0; i < NUMBER_OF_MESSAGES; i++) {
+  // Produce messages indefinitely until consumer detects experiment completion based on time
+  while(true) {
     previousConcentrations = getConcentrations(previousConcentrations);
-
+  
     // Merge default properties into new object by spreading and add generated concentrations and add timestamp
     const airQualityObservation = {
       ...defaultStationProperties,
       concentrations: previousConcentrations,
       timestamp: getCurrentTimestamp()
     };
-
+  
     // Publish air quality observation to exchange with routing key
     channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
     console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);

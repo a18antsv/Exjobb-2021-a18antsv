@@ -165,7 +165,7 @@ const renderExperimentsTable = () => {
       experimentName, 
       broker, 
       producers, 
-      messages, 
+      minutes, 
       status 
     } = experiment;
 
@@ -173,21 +173,21 @@ const renderExperimentsTable = () => {
     const tdName = document.createElement("td");
     const tdBroker = document.createElement("td");
     const tdProducers = document.createElement("td");
-    const tdMessages = document.createElement("td");
+    const tdMinutes = document.createElement("td");
     const tdStatus = document.createElement("td");
     const buttonContainer = document.createElement("td");
     row.dataset.experimentId = experimentId;
     tdName.innerText = experimentName;
     tdBroker.innerText = broker;
     tdProducers.innerText = producers;
-    tdMessages.innerText = messages;
+    tdMinutes.innerText = minutes;
     tdStatus.innerText = status;
     buttonContainer.classList.add("button-container");
 
     row.appendChild(tdName);
     row.appendChild(tdBroker);
     row.appendChild(tdProducers);
-    row.appendChild(tdMessages);
+    row.appendChild(tdMinutes);
     row.appendChild(tdStatus);
     row.appendChild(buttonContainer);
     tbody.appendChild(row);
@@ -298,14 +298,14 @@ newExperimentForm.addEventListener("submit", async e => {
   const experimentName = document.querySelector(`[name="experimentName"]`).value;
   const broker = document.querySelector(`[name="broker"]`).value;
   const producers = document.querySelector(`[name="producers"]`).value;
-  const messages = document.querySelector(`[name="messages"]`).value;
+  const minutes = document.querySelector(`[name="minutes"]`).value;
 
   const experiment = {
     experimentId: Date.now(),
     experimentName,
     broker,
     producers,
-    messages,
+    minutes,
     status: ""
   };
 

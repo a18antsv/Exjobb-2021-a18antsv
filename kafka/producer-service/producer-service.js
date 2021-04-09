@@ -5,7 +5,6 @@ import {
 } from "./shared/utils.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 
-const NUMBER_OF_MESSAGES = process.env.NUMBER_OF_MESSAGES || 10_000;
 const TOPIC_NAME = "air-quality-observation-topic";
 let previousConcentrations;
 
@@ -34,7 +33,8 @@ const producer = kafka.producer();
     return console.error("Could not connect to Kafka...");
   }
 
-  for(let i = 0; i < NUMBER_OF_MESSAGES; i++) {
+  // Produce messages indefinitely until consumer detects experiment completion based on time
+  while(true) {
     previousConcentrations = getConcentrations(previousConcentrations);
 
     // Merge default properties into new object by spreading and add generated concentrations and add timestamp

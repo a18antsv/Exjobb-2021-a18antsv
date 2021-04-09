@@ -35,13 +35,13 @@ const getExperimentById = experimentId => {
  */
 const runExperiment = experimentId => {
   const experiment = getExperimentById(experimentId);
-  const { broker, producers, messages } = experiment;
+  const { broker, producers, minutes } = experiment;
   experiment.status = Status.IN_PROGRESS;
   experimentsVersionGlobal++;
   runningExperimentId = experimentId;
 
   const shFilePath = `./sh/${broker.toLowerCase()}-start-experiment.sh`;
-  const shArgs = [producers, messages];
+  const shArgs = [producers, minutes];
 
   console.log(`Starting experiment with id ${experimentId}...`);
   execFile(shFilePath, shArgs, (err, stdout, stderr) => {

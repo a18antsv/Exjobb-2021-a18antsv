@@ -2,7 +2,7 @@
 
 # Parameters passed into the script
 PRODUCERS=${1:-1} # The number of producer containers to spin up (First argument passed to script or default if not passed)
-MESSAGES=${2:-10000} # The number of messages each producer should produce (Second argument passed to script or default if not passed)
+MINUTES=${2:-10} # The number of miuntes the experiment should run
 
 # Create and run Zookeeper container based on official Zookeeper image from Docker Hub
 docker run -d \
@@ -33,8 +33,7 @@ wurstmeister/kafka:2.13-2.7.0
 # Create and run one container instance of the Kafka consumer image
 docker run -d \
 --name kafka-consumer-service-1 \
--e NUMBER_OF_PRODUCERS=$PRODUCERS \
--e NUMBER_OF_MESSAGES=$MESSAGES \
+-e NUMBER_OF_MINUTES=$MINUTES \
 --net common-network \
 kafka-consumer-image
 
@@ -44,7 +43,6 @@ do
   docker run -d \
   --name kafka-producer-service-$i \
   -e STATION_ID=producer-service-$i \
-  -e NUMBER_OF_MESSAGES=$MESSAGES \
   --net common-network \
   kafka-producer-image
 done
