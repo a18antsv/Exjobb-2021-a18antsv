@@ -1,0 +1,2 @@
+# Prevent .sh files from being CRLF when cloning the repo as it made it impossible to run the bash scripts.
+*.sh eol=lf
