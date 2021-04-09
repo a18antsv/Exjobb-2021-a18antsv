@@ -78,6 +78,11 @@ const amqpConnectionSettings = {
     // Publish air quality observation to exchange with routing key
     channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
     console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);
+    
+    // When sending a lot of messages in a loop, nothing actually gets published on the socket until the code returns to the event loop
+    // This is discussed here for another amqp library for node.js https://github.com/squaremo/amqp.node/issues/144
+    // This seems to be a workaround that makes it possible to flush the publish
+    await new Promise(resolve => setTimeout(resolve));
   }
 
   await handler(channel.close());
