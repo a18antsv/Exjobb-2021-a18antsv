@@ -1,7 +1,6 @@
 import { CompressionTypes, Kafka } from "kafkajs";
 import { 
-  promiseHandler as handler,
-  getCurrentTimestamp
+  promiseHandler as handler
 } from "./shared/utils.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 
@@ -41,7 +40,7 @@ const producer = kafka.producer();
     const airQualityObservation = {
       ...defaultStationProperties,
       concentrations: previousConcentrations,
-      timestamp: getCurrentTimestamp()
+      timestamp: new Date().toISOString()
     };
 
     // Send air quality observation to Kafka topic

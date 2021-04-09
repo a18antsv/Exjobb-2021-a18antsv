@@ -1,7 +1,6 @@
 import amqp from "amqplib";
 import { 
-  promiseHandler as handler,
-  getCurrentTimestamp
+  promiseHandler as handler
 } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
@@ -73,7 +72,7 @@ const amqpConnectionSettings = {
     const airQualityObservation = {
       ...defaultStationProperties,
       concentrations: previousConcentrations,
-      timestamp: getCurrentTimestamp()
+      timestamp: new Date().toISOString()
     };
   
     // Publish air quality observation to exchange with routing key
