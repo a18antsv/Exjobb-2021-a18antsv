@@ -316,18 +316,36 @@ const appendToDataset = aggregations => {
   }
 }
 
-const drawGraph = () => {
+/**
+ * Updates every matric graph with data for every active station to show newly added data and only within the from-to interval
+ * @param {Date} from The date and time to start showing the graph from
+ * @param {Date} to The date and time to stop showing the graph at
+ */
+const drawGraph = (from, to) => {
+  const buckets = {};
+
+  // Filter the dataset to only include buckets with time keys in the from-to interval
+  for(const timeKey in dataset) {
+    const date = new Date(timeKey).getTime();
+    if(date > from.getTime() && date < to.getTime()) {
+      buckets[timeKey] = dataset[timeKey];
+    }
+  }
+
+  // Iterate through every metric chart to render the data in the interval for the correct chart
   for(const metric in chartsByMetric) {
     const chart = chartsByMetric[metric];
     const data = {};
+
+    // The chart is emptied before rerendering
     chart.data.labels = [];
     chart.data.datasets = [];
 
-    for(const timeKey in dataset) {
+    for(const timeKey in buckets) {
       const date = new Date(timeKey);
       chart.data.labels.push(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`);
 
-      const stations = dataset[timeKey];
+      const stations = buckets[timeKey];
       for(const stationId in stations) {
         if(!data[stationId]) {
           data[stationId] = [];
@@ -342,7 +360,7 @@ const drawGraph = () => {
         }
       }
     }
-
+    
     // Sort by station id to prevent dataset labels to shift orders when rerendering
     const stationIds = Object.keys(data).sort();
 
@@ -398,10 +416,14 @@ eventSource.addEventListener("status-update", e => {
 eventSource.addEventListener("message", e => {
   const aggregations = JSON.parse(e.data);
   appendToDataset(aggregations);
-  drawGraph();
-  
 
-  // Next: use dataset to draw graph
+  // Sliding window for the graph (how far back in time should the graph show max)
+  const now = new Date();
+  const from = new Date(now.getTime() - 15 * 1000);
+  const to = now;
+
+  // Draw graph and filter by time (from - to)
+  drawGraph(from, to);
 });
 
 /**
