@@ -13,7 +13,7 @@ const QUEUE_NAME = "air-quality-observation-queue";
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
 const MAXIMUM_NUMBER_OF_RETRIES = 30;
 const EXPERIMENT_TIME_MS = (process.env.NUMBER_OF_MINUTES || 10) * 60 * 1000;
-const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 5_000;
+const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 1000;
 
 const amqpConnectionSettings = {
   protocol: "amqp",
@@ -55,6 +55,10 @@ const amqpConnectionSettings = {
     });
     request.write(data);
     request.end();
+
+    // Empty aggregations after every time we send to dashboard backend
+    Object.keys(aggregations).forEach(stationId => delete aggregations[stationId]);
+
   }, AGGREGATE_PUBLISH_RATE);
 
   setTimeout(() => {

@@ -10,7 +10,7 @@ import {
 
 const TOPIC_NAME = "air-quality-observation-topic";
 const EXPERIMENT_TIME_MS = (process.env.NUMBER_OF_MINUTES || 10) * 60 * 1000;
-const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 5_000;
+const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 1000;
 
 const kafka = new Kafka({
   clientId: "consumer-service-1",
@@ -53,6 +53,10 @@ const consumer = kafka.consumer({
     });
     request.write(data);
     request.end();
+
+    // Empty aggregations after every time we send to dashboard backend
+    Object.keys(aggregations).forEach(stationId => delete aggregations[stationId]);
+
   }, AGGREGATE_PUBLISH_RATE);
 
   setTimeout(() => {

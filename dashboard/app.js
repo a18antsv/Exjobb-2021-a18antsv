@@ -12,6 +12,9 @@ const Status = {
   COMPLETED: "Completed"
 };
 
+const STATUS_UPDATE_RATE = 1000;
+const PUBLISH_TO_FRONTEND_RATE = 1000;
+
 let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
@@ -297,11 +300,15 @@ app.get("/events", (req, res) => {
       res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
       experimentsVersionLocal = experimentsVersionGlobal;
     }
-  }, 1000);
+  }, STATUS_UPDATE_RATE);
 
   setInterval(() => {
     res.write(`event: message\ndata: ${JSON.stringify(aggregations)}\n\n`);
-  }, 5000);
+
+    // Empty aggregations every time we send to frontend
+    aggregations = {};
+
+  }, PUBLISH_TO_FRONTEND_RATE);
 });
 
 app.listen(port, () => {

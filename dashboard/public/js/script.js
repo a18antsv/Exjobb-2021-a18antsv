@@ -249,6 +249,40 @@ const renderExperimentsTable = () => {
 }
 
 /**
+ * Background and border colors available for use for different datasets in a graph 
+ */
+const colors = [
+  {
+    background: "rgba(255, 99, 132, 0.2)",
+    border: "rgb(255, 99, 132)",
+  },
+  {
+    background: "rgba(255, 159, 64, 0.2)",
+    border: "rgb(255, 159, 64)",
+  },
+  {
+    background: "rgba(255, 205, 86, 0.2)",
+    border: "rgb(255, 205, 86)",
+  },
+  {
+    background: "rgba(75, 192, 192, 0.2)",
+    border: "rgb(75, 192, 192)",
+  },
+  {
+    background: "rgba(54, 162, 235, 0.2)",
+    border: "rgb(54, 162, 235)",
+  },
+  {
+    background: "rgba(153, 102, 255, 0.2)",
+    border: "rgb(153, 102, 255)",
+  },
+  {
+    background: "rgba(201, 203, 207, 0.2)",
+    border: "rgb(201, 203, 207)",
+  }
+];
+
+/**
  * Extracts data from the passed aggregations object (structure presented in aggregations.ts) and appends it 
  * to the local client-side dataset in a way that matches the structure presented in client-dataset-structure.ts.
  * @param {Object} aggregations The aggregations object to extract data from
@@ -279,6 +313,50 @@ const appendToDataset = aggregations => {
         dataset[timeKey][stationId].metrics[metric] += metrics[metric];
       }
     }
+  }
+}
+
+const drawGraph = () => {
+  for(const metric in chartsByMetric) {
+    const chart = chartsByMetric[metric];
+    const data = {};
+    chart.data.labels = [];
+    chart.data.datasets = [];
+
+    for(const timeKey in dataset) {
+      const date = new Date(timeKey);
+      chart.data.labels.push(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`);
+
+      const stations = dataset[timeKey];
+      for(const stationId in stations) {
+        if(!data[stationId]) {
+          data[stationId] = [];
+        }
+
+        if(metric === "throughput") {
+          const throughput = stations[stationId].count / stations[stationId].sizeMS * 1000;
+          data[stationId].push(throughput);
+        } else {
+          const average = stations[stationId].metrics[metric] / stations[stationId].count;
+          data[stationId].push(average);
+        }
+      }
+    }
+
+    // Sort by station id to prevent dataset labels to shift orders when rerendering
+    const stationIds = Object.keys(data).sort();
+
+    for(let i = 0; i < stationIds.length; i++) {
+      chart.data.datasets.push({
+        label: stationIds[i],
+        data: data[stationIds[i]],
+        backgroundColor: colors[i % colors.length].background,
+        borderColor: colors[i % colors.length].border,
+        borderWidth: 1
+      });
+    }
+
+    chart.update();
   }
 }
 
@@ -318,9 +396,10 @@ eventSource.addEventListener("status-update", e => {
  * SSE event that fires when the server decides to sends consumed messages received from the consumer.
  */
 eventSource.addEventListener("message", e => {
-  const aggregations = e.data;
+  const aggregations = JSON.parse(e.data);
   appendToDataset(aggregations);
-  console.log(aggregations);
+  drawGraph();
+  
 
   // Next: use dataset to draw graph
 });
@@ -405,7 +484,7 @@ chartCanvasElements.forEach(chartCanvasElement => {
   const metric = chartCanvasElement.dataset.metric;
 
   const chart = new Chart(ctx, {
-    type: "line",
+    type: "bar",
     data: {
       labels: [],
       datasets: []
