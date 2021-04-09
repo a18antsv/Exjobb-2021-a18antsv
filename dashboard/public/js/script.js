@@ -11,7 +11,8 @@ const EXPERIMENTS_KEY = "experiments";
 const eventSource = new EventSource("/events"); // Open Server-Sent Events (SSE) connection to server for constant status updates and data transfer
 let Status = {};
 let experiments = [];
-let charts = {};
+let chartsByMetric = {};
+let dataset = {};
 
 /**
  * Saves key/value pair in the browser's local storage.
@@ -247,6 +248,40 @@ const renderExperimentsTable = () => {
   rowNewExperiment.querySelector(`[name="experimentName"]`).value = `Experiment ${experiments.length + 1}`;
 }
 
+/**
+ * Extracts data from the passed aggregations object (structure presented in aggregations.ts) and appends it 
+ * to the local client-side dataset in a way that matches the structure presented in client-dataset-structure.ts.
+ * @param {Object} aggregations The aggregations object to extract data from
+ */
+const appendToDataset = aggregations => {
+  for(const stationId in aggregations) {
+    const { buckets } = aggregations[stationId];
+    for(const timeKey in buckets) {
+      if(!dataset[timeKey]) {
+        dataset[timeKey] = {};
+      }
+      const bucket = buckets[timeKey];
+      const { co, no2, o3, pm10, pm25, so2, latency, count, sizeMS } = bucket;
+      if(!dataset[timeKey][stationId]) {
+        dataset[timeKey][stationId] = {
+          count,
+          sizeMS,
+          metrics: {}
+        };
+      } else {
+        dataset[timeKey][stationId].count += count;
+      }
+      const metrics = { co, no2, o3, pm10, pm25, so2, latency };
+      for(const metric in metrics) {
+        if(!dataset[timeKey][stationId].metrics[metric]) {
+          dataset[timeKey][stationId].metrics[metric] = 0;
+        }
+        dataset[timeKey][stationId].metrics[metric] += metrics[metric];
+      }
+    }
+  }
+}
+
 // Self invoking async function to be able to use top-level await
 (async () => {
   // Get available experiment status codes from the server to be able to recognize statuses and render different things based on them.
@@ -284,7 +319,10 @@ eventSource.addEventListener("status-update", e => {
  */
 eventSource.addEventListener("message", e => {
   const aggregations = e.data;
+  appendToDataset(aggregations);
   console.log(aggregations);
+
+  // Next: use dataset to draw graph
 });
 
 /**
@@ -373,6 +411,7 @@ chartCanvasElements.forEach(chartCanvasElement => {
       datasets: []
     },
     options: {
+      animation: false,
       scales: {
         y: {
           beginAtZero: true
@@ -384,5 +423,5 @@ chartCanvasElements.forEach(chartCanvasElement => {
     }
   });
 
-  charts[metric] = chart;
+  chartsByMetric[metric] = chart;
 });

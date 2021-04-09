@@ -1,94 +1,88 @@
 /**
- * Class representing a Bucket of aggregated concentrations that took place for a specific pollutant, 
- * within a specific interval. Each pollutant is an instance of the Gauge class.
+ * The time interval for how big of an interval one Bucket should represent
  */
-class Bucket {
-  constructor() {
-    this.co = new Gauge();
-    this.no2 = new Gauge();
-    this.o3 = new Gauge();
-    this.pm10 = new Gauge();
-    this.pm25 = new Gauge();
-    this.so2 = new Gauge();
-  }
-}
+const aggregationRateMS = process.env.AGGREGATION_RATE || 1_000;
 
 /**
- * Class that keeps track of the number of recorded concentrations for a specific pollutant
- * within a specific interval. All concentrations in the interval are aggregated into one final total value, 
- * which an average concentration for the interval can be extracted from.
+ * Bucket is a class that aggregates messages' concentrations and latencies into a sum.
+ * A Bucket represents a specific time interval (e.g. 2021-04-03T23:09:30.000Z - 2021-04-03T23:09:39.999Z).
+ * All messages that were produced during this time interval will have their data aggregated into a Bucket instance.
+ * The number of aggregations is stored in count to make it possible to calculate the mean value for each metric.
  */
-class Gauge {
-  constructor() {
+class Bucket {
+  constructor(sizeMS) {
+    this.co = 0;
+    this.no2 = 0;
+    this.o3 = 0;
+    this.pm10 = 0;
+    this.pm25 = 0;
+    this.so2 = 0;
+    this.latency = 0;
     this.count = 0;
-    this.total = 0;
-  }
-  
-  add(value) {
-    this.total += value;
-    this.count++;
+    this.sizeMS = sizeMS;
   }
 
-  avg() {
-    return this.total / this.count;
+  add({ co, no2, o3, pm10, pm25, so2, latency }) {
+    this.co += co;
+    this.no2 += no2;
+    this.o3 += o3;
+    this.pm10 += pm10;
+    this.pm25 += pm25;
+    this.so2 += so2;
+    this.latency += latency;
+    this.count++;
   }
 }
 
 /**
  * Round passed date to a specific time according to aggregationRateMS.
- * If aggregationRateMS is 10_000, the returned date will always have seconds incrementing by 10.
+ * If aggregationRateMS is 10_000, the returned date string will always have seconds incrementing by 10.
  * This is used to create buckets containing data for date intervals aggregationRateMS long (e.g. 10.000Z - 19.999Z)
  * @param {Date} date The date to round
  * @returns {String} A stringified Date in standardized Date format (ISO 8601) (e.g. 2021-04-03T23:09:30.000Z)
  */
 const getTimeKey = date => {
-  const aggregationRateMS = process.env.AGGREGATION_RATE || 10_000;
   return new Date(
     Math.floor(date.getTime() / aggregationRateMS) * aggregationRateMS
   ).toISOString();
 }
 
-/**
- * Object with StationIds as first level keys.
- * Each stationId has properties coordinates and concentrations.
- * Concentrations has properties with keys using the getTimeKey() function where 
- * recorded concentrations for the key are collected into a Bucket of aggregated pollutant concentrations.
- */
 export const aggregations = {};
 
 /**
- * Aggregates the concentrations in a message to the aggregations object.
- * @param {Object} message The message to aggregate
+ * Aggregates the concentrations of messages produced in a specific interval into a bucket.
+ * The aggregation of concentrations into buckets are made on a per station level. 
+ * The latency of the message is calculated and used as as a metric in the Bucket to make it
+ * possible to calculate a mean latency for the Bucket, just as for the concentrations. 
+ * @param {Object} message The message to save
  */
 export const saveMessage = message => {
   const { stationId, coordinates, timestamp, concentrations } = message;
+  const latency = new Date().getTime() - new Date(timestamp).getTime();
 
   // Add stationId property to aggregations object if it does not already exist
   if (!aggregations[stationId]) {
     aggregations[stationId] = {
       coordinates,
-      concentrations: {}
+      buckets: {}
     };
   }
 
-  // Get a common key based on the timestamp by rounding 
+  // Get a common key based on the timestamp by rounding
   const key = getTimeKey(new Date(timestamp));
 
   const station = aggregations[stationId];
 
   // Create a Bucket for the rounded date key if the key does not already exist
-  if (!station.concentrations[key]) {
-    station.concentrations[key] = new Bucket();
+  if (!station.buckets[key]) {
+    station.buckets[key] = new Bucket(aggregationRateMS);
   }
 
+  const bucket = station.buckets[key];
 
-  const aggregate = station.concentrations[key];
-
-  // Add the message's concentrations to the Bucket's different Gauges
-  aggregate.co.add(concentrations.co);
-  aggregate.no2.add(concentrations.no2);
-  aggregate.o3.add(concentrations.o3);
-  aggregate.pm10.add(concentrations.pm10);
-  aggregate.pm25.add(concentrations.pm25);
-  aggregate.so2.add(concentrations.so2);
+  // Spread the concentrations object into a new object with the latency as a Bucket expects latency on top of all concentrations.
+  bucket.add({
+    latency, 
+    ...concentrations
+  });
 }

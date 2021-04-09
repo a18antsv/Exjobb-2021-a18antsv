@@ -1,9 +1,11 @@
+const aggregationRateMS = 1_000;
+
 interface Aggregations {
   [key: string]: Station
 }
 
 interface Station {
-  concentrations: {
+  buckets: {
     [key: string]: Bucket
   }
   coordinates: {
@@ -30,39 +32,37 @@ interface Message {
 }
 
 class Bucket {
-  pm25: Gauge
-  pm10: Gauge
-  no2: Gauge
-  co: Gauge
-  o3: Gauge
-  so2: Gauge
+  pm25: number;
+  pm10: number;
+  no2: number;
+  co: number;
+  o3: number;
+  so2: number;
+  latency: number;
+  count: number;
+  readonly sizeMS: number;
 
-  constructor() {
-    this.co = new Gauge()
-    this.no2 = new Gauge()
-    this.o3 = new Gauge()
-    this.pm10 = new Gauge()
-    this.pm25 = new Gauge()
-    this.so2 = new Gauge()
-  }
-}
-
-class Gauge {
-  count: number
-  total: number
-
-  constructor() {
-    this.count = 0
-    this.total = 0
+  constructor(sizeMS: number) {
+    this.co = 0;
+    this.no2 = 0;
+    this.o3 = 0;
+    this.pm10 = 0;
+    this.pm25 = 0;
+    this.so2 = 0;
+    this.latency = 0;
+    this.count = 0;
+    this.sizeMS = sizeMS;
   }
 
-  add(value: number): void {
-    this.total += value
-    this.count++
-  }
-
-  avg(): number {
-    return this.total / this.count;
+  add({ co, no2, o3, pm10, pm25, so2, latency }): void {
+    this.co += co;
+    this.no2 += no2;
+    this.o3 += o3;
+    this.pm10 += pm10;
+    this.pm25 += pm25;
+    this.so2 += so2;
+    this.latency += latency;
+    this.count++;
   }
 }
 
@@ -73,9 +73,9 @@ const aggregations: Aggregations = {
       lat: 0,
       long: 0,
     },
-    concentrations: {
-      "2021-04-03T23:09:30.000Z": new Bucket(),
-      "2021-04-03T23:09:40.000Z": new Bucket(),
+    buckets: {
+      "2021-04-03T23:09:30.000Z": new Bucket(aggregationRateMS),
+      "2021-04-03T23:09:40.000Z": new Bucket(aggregationRateMS),
     }
   },
   "station_b": {
@@ -83,42 +83,41 @@ const aggregations: Aggregations = {
       lat: 0,
       long: 0,
     },
-    concentrations: {
-      "2021-04-03T23:09:30.000Z": new Bucket(),
-      "2021-04-03T23:09:40.000Z": new Bucket(),
+    buckets: {
+      "2021-04-03T23:09:30.000Z": new Bucket(aggregationRateMS),
+      "2021-04-03T23:09:40.000Z": new Bucket(aggregationRateMS),
     }
   }
 }
 
 const timeKey = (date: Date): string => {
-  const aggregationIntervalMS = 10_000;
   return new Date(
-    Math.round(date.getTime() / aggregationIntervalMS) * aggregationIntervalMS
+    Math.round(date.getTime() / aggregationRateMS) * aggregationRateMS
   ).toISOString();
 }
 
 const saveMessage = (message: Message): void => {
   const { stationId, coordinates, timestamp, concentrations } = message;
+  const latency = new Date().getTime() - new Date(timestamp).getTime();
+  
   if (!aggregations[stationId]) {
     aggregations[stationId] = {
       coordinates,
-      concentrations: {}
+      buckets: {}
     }
   }
 
   const key = timeKey(new Date(timestamp));
   const station = aggregations[stationId];
 
-  if (!station.concentrations[key]) {
-    station.concentrations[key] = new Bucket();
+  if (!station.buckets[key]) {
+    station.buckets[key] = new Bucket(aggregationRateMS);
   }
 
-  const aggregate = station.concentrations[key];
+  const bucket = station.buckets[key];
 
-  aggregate.co.add(concentrations.co);
-  aggregate.no2.add(concentrations.no2);
-  aggregate.o3.add(concentrations.o3);
-  aggregate.pm10.add(concentrations.pm10);
-  aggregate.pm25.add(concentrations.pm25);
-  aggregate.so2.add(concentrations.so2);
+  bucket.add({
+    latency, 
+    ...concentrations
+  });
 }
