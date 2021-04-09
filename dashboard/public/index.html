@@ -58,43 +58,60 @@
     <div class="management-container">
       <div class="back-button">Back</div>
       <div class="header">
+        <div class="title">Performance data</div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-header">Throughput</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="throughput"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Latency</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="latency"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="header">
         <div class="title">Pollutant concentration data</div>
       </div>
       <div class="cards">
         <div class="card">
           <div class="card-header">PM2.5</div>
           <div class="canvas-container">
-            <canvas class="chart" data-pollutant="pm25"></canvas>
+            <canvas class="chart" data-metric="pm25"></canvas>
           </div>
         </div>
         <div class="card">
           <div class="card-header">PM10</div>
           <div class="canvas-container">
-            <canvas class="chart" data-pollutant="pm10"></canvas>
+            <canvas class="chart" data-metric="pm10"></canvas>
           </div>
         </div>
         <div class="card">
           <div class="card-header">NO2</div>
           <div class="canvas-container">
-            <canvas class="chart" data-pollutant="no2"></canvas>
+            <canvas class="chart" data-metric="no2"></canvas>
           </div>
         </div>
         <div class="card">
           <div class="card-header">CO</div>
           <div class="canvas-container">
-            <canvas class="chart" data-pollutant="co"></canvas>
+            <canvas class="chart" data-metric="co"></canvas>
           </div>
         </div>
         <div class="card">
           <div class="card-header">O3</div>
           <div class="canvas-container">
-            <canvas class="chart" data-pollutant="o3"></canvas>
+            <canvas class="chart" data-metric="o3"></canvas>
           </div>
         </div>
         <div class="card">
           <div class="card-header">SO2</div>
           <div class="canvas-container">
-            <canvas class="chart" data-pollutant="so2"></canvas>
+            <canvas class="chart" data-metric="so2"></canvas>
           </div>
         </div>
       </div>

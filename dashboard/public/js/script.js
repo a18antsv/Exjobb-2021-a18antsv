@@ -364,7 +364,7 @@ sortableTableHeaders.forEach((th, i) => {
 
 chartCanvasElements.forEach(chartCanvasElement => {
   const ctx = chartCanvasElement.getContext("2d");
-  const pollutant = chartCanvasElement.dataset.pollutant;
+  const metric = chartCanvasElement.dataset.metric;
 
   const chart = new Chart(ctx, {
     type: "line",
@@ -384,5 +384,5 @@ chartCanvasElements.forEach(chartCanvasElement => {
     }
   });
 
-  charts[pollutant] = chart;
+  charts[metric] = chart;
 });
