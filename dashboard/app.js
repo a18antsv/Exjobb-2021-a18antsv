@@ -8,7 +8,9 @@ const port = 3000;
 const Status = {
   NOT_STARTED: "Not started",
   IN_QUEUE: "In queue",
+  STARTING: "Starting...",
   IN_PROGRESS: "In progress",
+  STOPPING: "Stopping...",
   COMPLETED: "Completed"
 };
 
@@ -32,14 +34,16 @@ const getExperimentById = experimentId => {
 
 /**
  * Runs a new experiment by running a bash script that starts all neccessary Docker containers for the experiment's broker.
- * Parameters for producers and number of messages are passed to the bash script to determine how many 
- * producer containers that should be spun up and how many messages each container should produce.
+ * Parameters for producers and number of minutes are passed to the bash script to determine how many 
+ * producer containers that should be spun up and how long the experiment should be running for.
  * @param {String} experimentId The id of the experiment to start
  */
 const runExperiment = experimentId => {
   const experiment = getExperimentById(experimentId);
   const { broker, producers, minutes } = experiment;
-  experiment.status = Status.IN_PROGRESS;
+
+  // Update experiment status directly without waiting for the bash script to finish
+  experiment.status = Status.STARTING;
   experimentsVersionGlobal++;
   runningExperimentId = experimentId;
 
@@ -48,6 +52,12 @@ const runExperiment = experimentId => {
 
   console.log(`Starting experiment with id ${experimentId}...`);
   execFile(shFilePath, shArgs, (err, stdout, stderr) => {
+    // Update status again once all containers have finished starting
+    // Code executing before error checking since errors occur even when all containers started just fine sometimes
+    experiment.status = Status.IN_PROGRESS;
+    experimentsVersionGlobal++;
+
+    console.log(`Experiment with id ${experimentId} is running.`);
     if(err) {
       console.log(`error: ${err.message}`);
       return;
@@ -57,13 +67,13 @@ const runExperiment = experimentId => {
       return;
     }
     console.log(`stdout (Docker container ids): ${stdout}`);
-    console.log(`Experiment with id ${experimentId} is running.`);
   });
 }
 
 /**
- * Stops a running experiment, if there is one, by running a bash script that removes all running Docker containers
+ * Stops a running experiment, if there is one, by running a bash script that removes all running Docker containers.
  * @param {String} experimentId The id of the experiment to stop 
+ * @param {Boolean} isForced True if the experiment was manually stopped and false if completed normally
  */
 const stopExperiment = (experimentId, isForced = false) => {
   if(!runningExperimentId) {
@@ -72,11 +82,31 @@ const stopExperiment = (experimentId, isForced = false) => {
   }
 
   const experiment = getExperimentById(experimentId);
-  const { broker, producers, status } = experiment;
+  const { broker, producers } = experiment;
+
   const shFilePath = `./sh/${broker.toLowerCase()}-stop-experiment.sh`;
   const shArgs = [producers];
 
+  // Update experiment status directly without waiting for the bash script to finish
+  experiment.status = Status.STOPPING;
+  experimentsVersionGlobal++;
+
   execFile(shFilePath, shArgs, (err, stdout, stderr) => {
+    /**
+     * Sometimes Docker gives an error even if everything seems to stop just fine
+     * which caused the code below the error if-statements to not execute.
+     * Moved the code above to exectue it despite any errors
+     */
+    if(isForced) {
+      experiment.status = Status.NOT_STARTED;
+    } else {
+      experiment.status = Status.COMPLETED;
+    }
+
+    runningExperimentId = undefined;
+    experimentsVersionGlobal++;
+    nextExperiment();
+    
     if(err) {
       console.log(`error: ${err.message}`);
       return;
@@ -86,15 +116,6 @@ const stopExperiment = (experimentId, isForced = false) => {
       return;
     }
     console.log(`stdout: ${stdout}`);
-
-    if(isForced) {
-      experiment.status = Status.NOT_STARTED;
-    } else {
-      experiment.status = Status.COMPLETED;
-    }
-    runningExperimentId = undefined;
-    experimentsVersionGlobal++;
-    nextExperiment();
   });
 }
 

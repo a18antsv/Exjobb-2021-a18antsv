@@ -184,7 +184,8 @@ td {
 
 .row-new-experiment input,
 .row-new-experiment select {
-  width: 100%;
+  max-width: 100%;
+  width: 100px;
   border: none;
   outline: none;
   background: none;

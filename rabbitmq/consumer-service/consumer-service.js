@@ -73,13 +73,12 @@ const amqpConnectionSettings = {
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
   const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
-    //console.log(`Consumed air quality observation from station with id ${stationId}.`);
+    console.log(`Consumed air quality observation.`);
     const message = JSON.parse(messageObject.content.toString());
+    saveMessage(message);
 
     // Acknowledge successful message consumption to delete message from queue
     channel.ack(messageObject);
-
-    saveMessage(message);
   }));
   if(consumeError) {
     console.log(`Could not consume from queue ${QUEUE_NAME}`);

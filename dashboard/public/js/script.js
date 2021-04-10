@@ -103,7 +103,6 @@ const deleteExperiment = async experimentId => {
  * @todo Management view
  */
 const manageExperiment = experimentId => {
-  console.log(`Manage experiment with id ${experimentId}`);
   const experimentRow = experimentsTable.querySelector(`tr[data-experiment-id="${experimentId}"]`);
   experimentRow.classList.add("show-table-row");
   appContainerElement.classList.add("management");
@@ -198,7 +197,7 @@ const renderExperimentsTable = () => {
         text: "M",
         clazz: "manage",
         func: manageExperiment,
-        showOnStatuses: [Status.IN_PROGRESS, Status.COMPLETED]
+        showOnStatuses: [Status.STARTING, Status.IN_PROGRESS]
       },
       {
         text: "Q",
@@ -405,7 +404,6 @@ const drawGraph = (from, to) => {
  * updated on the client side from another server response on a direct request (e.g. addExperiment, deleteExperiment, queueExperiment)
  */
 eventSource.addEventListener("status-update", e => {
-  console.log(JSON.parse(e.data));
   experiments = JSON.parse(e.data);
   renderExperimentsTable();
 });

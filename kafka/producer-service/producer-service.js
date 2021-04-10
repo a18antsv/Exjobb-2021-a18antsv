@@ -55,9 +55,9 @@ const producer = kafka.producer();
       compression: CompressionTypes.None,
     }));
   
-    if(!sendError) {
+    /*if(!sendError) {
       console.log(`Successfully sent air quality observation to topic ${TOPIC_NAME}`);
-    }
+    }*/
   }
 
   await handler(producer.disconnect());
