@@ -21,6 +21,7 @@ let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
 let experimentsVersionGlobal = 0; // Incremented after experiment status change to detect when to send SSE update to client
+let startIndexGlobal = 0; // Incremented after consumer informs a successful connection to the broker on experiment start
 let aggregations = {};
 
 /**
@@ -299,8 +300,18 @@ app.post("/aggregations", (req, res) => {
   aggregations = req.body;
 });
 
+/**
+ * This route is used to get requests from the consumer about experiment completions
+ */
 app.post("/completed", (req, res) => {
   stopExperiment(runningExperimentId, false);
+});
+
+/**
+ * This route is used to get requests from the consumer about experiment start after established broker connection
+ */
+app.post("/start", (req, res) => {
+  startIndexGlobal++;
 });
 
 /**
@@ -309,6 +320,7 @@ app.post("/completed", (req, res) => {
  */
 app.get("/events", (req, res) => {
   let experimentsVersionLocal = 0; // Compared with global experiments version to determine if there is a newer version to send or not
+  let startIndexLocal = 0;
 
   res.set({
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -320,6 +332,12 @@ app.get("/events", (req, res) => {
     if(experimentsVersionLocal < experimentsVersionGlobal) {
       res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
       experimentsVersionLocal = experimentsVersionGlobal;
+    }
+
+    if(startIndexLocal < startIndexGlobal) {
+      const { minutes } = getExperimentById(runningExperimentId);
+      res.write(`event: countdown\ndata: ${minutes}\n\n`);
+      startIndexLocal = startIndexGlobal;
     }
   }, STATUS_UPDATE_RATE);
 

@@ -99,6 +99,10 @@ body {
   display: inline-block;
 }
 
+.countdown {
+  font-size: 24px;
+}
+
 .button {
   cursor: pointer;
   padding: 12px 36px;
@@ -111,7 +115,6 @@ body {
   padding: 4px 8px;
   color: #000000;
 }
-
 
 .back-button {
   cursor: pointer;

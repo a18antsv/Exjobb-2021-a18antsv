@@ -15,6 +15,12 @@ const MAXIMUM_NUMBER_OF_RETRIES = 30;
 const EXPERIMENT_TIME_MS = (process.env.NUMBER_OF_MINUTES || 10) * 60 * 1000;
 const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 1000;
 
+const commonRequestProperties = {
+  hostname: "dashboard-app",
+  port: 3000,
+  method: "POST",
+};
+
 const amqpConnectionSettings = {
   protocol: "amqp",
   hostname: "rabbit-node-1",
@@ -44,14 +50,12 @@ const amqpConnectionSettings = {
   setInterval(() => {
     const data = JSON.stringify(aggregations);
     const request = http.request({
-      hostname: 'dashboard-app',
-      port: 3000,
-      path: '/aggregations',
-      method: 'POST',
+      path: "/aggregations",
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': data.length
-      }
+        "Content-Type": "application/json",
+        "Content-Length": data.length
+      },
+      ...commonRequestProperties
     });
     request.write(data);
     request.end();
@@ -61,12 +65,20 @@ const amqpConnectionSettings = {
 
   }, AGGREGATE_PUBLISH_RATE);
 
+  // A request to the dashboard backend for when the consumer will initialize its timeout function
+  // Used to make it possible to have a decently correct countdown on the frontend
+  {
+    const request = http.request({
+      path: "/start",
+      ...commonRequestProperties
+    });
+    request.end();
+  }
+
   setTimeout(() => {
     const request = http.request({
-      hostname: "dashboard-app",
-      port: 3000,
       path: "/completed",
-      method: "POST",
+      ...commonRequestProperties
     });
     request.end();
   }, EXPERIMENT_TIME_MS);

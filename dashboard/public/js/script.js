@@ -6,6 +6,7 @@ const newExperimentForm = document.querySelector("#new-experiment-form");
 const backButton = document.querySelector(".back-button");
 const sortableTableHeaders = experimentsTable.querySelectorAll("th[data-sortable]");
 const chartCanvasElements = document.querySelectorAll(".chart");
+const countdownElement = document.querySelector(".countdown");
 
 const EXPERIMENTS_KEY = "experiments";
 const eventSource = new EventSource("/events"); // Open Server-Sent Events (SSE) connection to server for constant status updates and data transfer
@@ -13,6 +14,7 @@ let Status = {};
 let experiments = [];
 let chartsByMetric = {};
 let dataset = {};
+let countdownInterval;
 
 /**
  * Saves key/value pair in the browser's local storage.
@@ -142,6 +144,8 @@ const stopExperiment = async experimentId => {
     return;
   }
   experiments = data.experiments;
+  clearInterval(countdownInterval);
+  countdownElement.innerText = "00:00:00";
   saveToLocalStorage(EXPERIMENTS_KEY, experiments);
   renderExperimentsTable();
 }
@@ -245,6 +249,41 @@ const renderExperimentsTable = () => {
   // Rerender removed form elements row as the last table row
   tbody.appendChild(rowNewExperiment);
   rowNewExperiment.querySelector(`[name="experimentName"]`).value = `Experiment ${experiments.length + 1}`;
+}
+
+/**
+ * Starts a countdown that counts down from passed number of minutes
+ * @param {Number} minutes The number of minutes the countdown should count down
+ */
+const startCountdown = (minutes = 10) => {
+  const start = new Date();
+  const end = new Date(start.getTime() + minutes * 60 * 1000);
+  
+  const getTimeRemaining = () => {
+    const now = new Date();
+    const timeLeft = end.getTime() - now.getTime();
+    return {
+      timeLeft,
+      hours: Math.floor(timeLeft / (1000 * 60 * 60)),
+      minutes: Math.floor((timeLeft / 1000 / 60) % 60),
+      seconds: Math.floor((timeLeft / 1000) % 60)
+    };
+  }
+  
+  const updateCountdown = () => {
+    const { timeLeft, hours, minutes, seconds} = getTimeRemaining();
+  
+    if(timeLeft <= 0) {
+      clearInterval(countdownInterval);
+      countdownElement.innerText = "00:00:00";
+      return;
+    }
+  
+    countdownElement.innerText = `${("0" + hours).slice(-2)}:${("0" + minutes).slice(-2)}:${("0" + seconds).slice(-2)}`;
+  }
+  
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 500);
 }
 
 /**
@@ -423,6 +462,12 @@ eventSource.addEventListener("message", e => {
   // Draw graph and filter by time (from - to)
   drawGraph(from, to);
 });
+
+eventSource.addEventListener("countdown", e => {
+  const minutes = parseInt(e.data);
+  clearInterval(countdownInterval);
+  startCountdown(minutes);
+})
 
 /**
  * Executes when adding a new experiment to the table.
