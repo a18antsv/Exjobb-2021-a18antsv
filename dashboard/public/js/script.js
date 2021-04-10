@@ -100,14 +100,11 @@ const deleteExperiment = async experimentId => {
 }
 
 /**
- * Show only experiment row with passed experiment id and open up a new management view for passed experiment.
- * @param {Number} experimentId The id of the experiment to manage
- * @todo Management view
+ * Switch to management view
  */
-const manageExperiment = experimentId => {
-  const experimentRow = experimentsTable.querySelector(`tr[data-experiment-id="${experimentId}"]`);
-  experimentRow.classList.add("show-table-row");
+const manageExperiment = () => {
   appContainerElement.classList.add("management");
+  renderExperimentsTable();
 }
 
 /**
@@ -126,6 +123,10 @@ const queueExperiment = async experimentId => {
   renderExperimentsTable();
 }
 
+/**
+ * Sends a request to the server to dequeue an experiment based on its id
+ * @param {Number} experimentId The id of the experiment to dequeue
+ */
 const dequeueExperiment = async experimentId => {
   const data = await postToServer("/dequeue", { experimentId });
   console.log(data.message);
@@ -137,6 +138,10 @@ const dequeueExperiment = async experimentId => {
   renderExperimentsTable();
 }
 
+/**
+ * Sends a request to the server to stop an experiment based on its id
+ * @param {Number} experimentId The id of the experiment to stop
+ */
 const stopExperiment = async experimentId => {
   const data = await postToServer("/stop", { experimentId });
   console.log(data.message);
@@ -163,7 +168,7 @@ const renderExperimentsTable = () => {
   rows.forEach(row => row.parentNode.removeChild(row));
 
   // Insert row in table for each experiment
-  experiments.forEach(experiment => {
+  for(const experiment of experiments) {
     const { 
       experimentId,
       experimentName, 
@@ -172,6 +177,13 @@ const renderExperimentsTable = () => {
       minutes, 
       status 
     } = experiment;
+
+    // In management view, do not render experiments in the table that are not starting or in progress
+    if(appContainerElement.classList.contains("management")) {
+      if(status !== Status.IN_PROGRESS && status !== Status.STARTING) {
+        continue;
+      }
+    }
 
     const row = document.createElement("tr");
     const tdName = document.createElement("td");
@@ -241,7 +253,7 @@ const renderExperimentsTable = () => {
       buttonElement.addEventListener("click", () => func(experimentId));
       buttonContainer.appendChild(buttonElement);
     }
-  });
+  }
 
   // Update available experiments counter
   experimentCounterElement.innerHTML = experiments.length;
@@ -463,6 +475,11 @@ eventSource.addEventListener("message", e => {
   drawGraph(from, to);
 });
 
+/**
+ * SSE event that fires when a new experiment countdown is supposed to be started.
+ * This is based on consumer service acknowledgement of broker connection.
+ * The received data contains the number of minutes to countdown for.
+ */
 eventSource.addEventListener("countdown", e => {
   const minutes = parseInt(e.data);
   clearInterval(countdownInterval);

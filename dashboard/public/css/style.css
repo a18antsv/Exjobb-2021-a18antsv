@@ -36,7 +36,6 @@ body {
 }
 
 .app-container.management .table-container .header,
-.app-container.management .experiments-table tbody tr,
 .app-container.management tr.show-table-row .button-container .manage,
 .app-container.management tr.show-table-row .button-container .delete {
   display: none;
