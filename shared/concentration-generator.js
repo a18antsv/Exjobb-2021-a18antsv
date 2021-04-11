@@ -3,7 +3,7 @@ import { getRandomFloat } from "./utils.js";
 import concentrationStats from "./concentration-statistics.js"
 
 // The seed used to replicate generated datasets. 
-const SEED = "producer-1";
+const SEED = process.env.STATION_ID || "producer-service-1";
 // Using the alea pseudo random number generator since it was one of the fastest according to https://www.npmjs.com/package/seedrandom
 const { alea } = seedrandom;
 // rng is the function to invoke, now based on the chosen seed with the alea PRNG

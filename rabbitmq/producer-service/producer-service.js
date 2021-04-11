@@ -1,7 +1,6 @@
 import amqp from "amqplib";
 import { 
-  promiseHandler as handler,
-  getCurrentTimestamp
+  promiseHandler as handler
 } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
@@ -13,16 +12,15 @@ const BINDING_KEY = "air-quality-observation-binding";
 const ROUTING_KEY = BINDING_KEY;
 const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
 const MAXIMUM_NUMBER_OF_RETRIES = 30;
-const NUMBER_OF_OBSERVATIONS = 100;
 let previousConcentrations;
 
 // Properties included in air quality data point that never changes for an air quality sensor station
 // Will be merged into each air quality data point
 const defaultStationProperties = {
-  stationId: "air-station-01",
+  stationId: process.env.STATION_ID || "producer-service-1",
   coordinates: {
-    lat: 37.5665,
-    long: 126.9780
+    lat: process.env.LAT || 37.5665,
+    long: process.env.LONG || 126.9780
   }
 };
 
@@ -66,19 +64,25 @@ const amqpConnectionSettings = {
     console.error("Could not bind queue to exchange");
   }
 
-  for(let i = 0; i < NUMBER_OF_OBSERVATIONS; i++) {
+  // Produce messages indefinitely until consumer detects experiment completion based on time
+  while(true) {
     previousConcentrations = getConcentrations(previousConcentrations);
-
+  
     // Merge default properties into new object by spreading and add generated concentrations and add timestamp
     const airQualityObservation = {
       ...defaultStationProperties,
       concentrations: previousConcentrations,
-      timestamp: getCurrentTimestamp()
+      timestamp: new Date().toISOString()
     };
-
+  
     // Publish air quality observation to exchange with routing key
     channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
     console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);
+    
+    // When sending a lot of messages in a loop, nothing actually gets published on the socket until the code returns to the event loop
+    // This is discussed here for another amqp library for node.js https://github.com/squaremo/amqp.node/issues/144
+    // This seems to be a workaround that makes it possible to flush the publish
+    await new Promise(resolve => setTimeout(resolve));
   }
 
   await handler(channel.close());

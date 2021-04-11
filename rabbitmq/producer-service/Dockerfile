@@ -23,4 +23,4 @@ COPY ./rabbitmq/producer-service/ ./
 COPY ./shared/utils.js ./shared/rabbitmq-connect.js ./shared/concentration-generator.js ./shared/concentration-statistics.js ./shared/
 
 # Command to execute when container instance is created based on image (starts application in container)
-CMD [ "npm", "run", "dev" ]
+CMD [ "npm", "run", "prod" ]

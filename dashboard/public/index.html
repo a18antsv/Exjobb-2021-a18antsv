@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kafka/RabbitMQ experiment manager</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/chart.min.js" defer></script>
+  <script src="./js/script.js" defer></script>
+</head>
+<body>
+  <div class="app-container">
+    <div class="table-container">
+      <div class="header">
+        <div class="title">
+          Available experiments (<span class="experiment-counter">0</span>)
+        </div>
+        <div class="button button-new-experiment">Add new experiment</div>
+      </div>
+      <table class="experiments-table">
+        <form id="new-experiment-form" action="/new-experiment" method="post" autocomplete="off"></form> <!-- Reference this form in inputs in table cells -->
+        <thead>
+          <tr>
+            <th data-sortable>Name ⇅</th>
+            <th data-sortable>Broker ⇅</th>
+            <th data-sortable data-integer>Producers ⇅</th>
+            <th data-sortable data-integer>Minutes ⇅</th>
+            <th data-sortable>Status ⇅</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-new-experiment hidden">
+            <td>
+              <input type="text" form="new-experiment-form" name="experimentName" maxlength="20" value="Experiment 1">
+            </td>
+            <td>
+              <select name="broker" form="new-experiment-form" required>
+                <option value="Kafka" selected>Kafka</option>
+                <option value="RabbitMQ">RabbitMQ</option>
+              </select>
+            </td>
+            <td>
+              <input type="number" form="new-experiment-form" name="producers" min="1" max="10" value="1" required>
+            </td>
+            <td>
+              <input type="number" form="new-experiment-form" name="minutes" min="1" max="10080" value="10" required>
+            </td>
+            <td>Not started</td>
+            <td>
+              <input type="submit" form="new-experiment-form" value="Add">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="management-container">
+      <div class="back-button">Back</div>
+      <div class="header">
+        <div class="title">Performance data</div>
+        <div class="countdown">00:00:00</div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-header">Throughput</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="throughput"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Latency</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="latency"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="header">
+        <div class="title">Pollutant concentration data</div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-header">PM2.5</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="pm25"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">PM10</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="pm10"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">NO2</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="no2"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">CO</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="co"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">O3</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="o3"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">SO2</div>
+          <div class="canvas-container">
+            <canvas class="chart" data-metric="so2"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
