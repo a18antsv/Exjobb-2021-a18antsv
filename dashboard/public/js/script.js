@@ -299,6 +299,120 @@ const startCountdown = (minutes = 10) => {
 }
 
 /**
+ * Uses the current state of the dataset to build a new object where each key represents a column name
+ * and each key has an array of values that will be used to build a comma separated string for a CSV-file.
+ * Throughput and latency metrics will each have one key per producer. 
+ * Time will also be a key whose values represents an interval for when data in other columns were recorded.
+ * @returns {Object} Object with column keys each representing an array of values
+ */
+const getObjectCSV = () => {
+  const csv = {};
+
+  const setCSV = (column, row, value) => {
+    if(!csv[column]) {
+      csv[column] = [];
+    }
+    csv[column][row] = value;
+  }
+  
+  let row = 0;
+
+  for(const timeKey in dataset) {
+    const stations = dataset[timeKey];
+
+    setCSV("time", row, timeKey);
+
+    for(const stationId in stations) {
+      const { count, sizeMS, metrics: { latency } } = stations[stationId];
+      setCSV(stationId + "_throughput", row, count / sizeMS * 1000);
+      setCSV(stationId + "_latency", row, latency / count);
+    }
+    
+    row++
+  }
+  
+  return csv;
+}
+
+/**
+ * Uses object produced by getObjectCSV to build a comma separated string for a CSV-file.
+ * @param {Object} csv Object with one key per column and an array of values for each key
+ * @returns {String} The whole CSV-string used to create a CSV-file
+ */
+const getStringCSV = csv => {
+  // The maximum number of values in any of the columns
+  const maxRows = Math.max(...Object.values(csv).map(column => column.length));
+  // Column headers keys for throughput
+  const throughputKeys = Object.keys(csv).sort().filter(key => key.includes("throughput"));
+  // Column header keys for latency
+  const latencyKeys = Object.keys(csv).sort().filter(key => key.includes("latency"));
+  // The header row to use as the first row
+  const headerRow = `time,${throughputKeys.join(",")},total_throughput,${latencyKeys.join(",")},average_latency`;
+
+  // The total throughput will be the sum of the throughput from all active producers
+  // The average latency will be the sum of alla latencies divided by the number of active producers
+  // Pass these one of these functions to the getRowStr function depending on if the function executes for a throughput or latency row
+  const totalFunc = (sum) => sum;
+  const averageFunc = (sum, count) => sum / count;
+
+  /**
+   * Builds the throughput or latency part of a string based on data for a single row.
+   * @param {Number} i Index of the row to extract data from 
+   * @param {Array} keys Column keys
+   * @param {Function} calcFunc Calculation function to use depending on if total throughput or average latency should be calculated
+   * @returns {String} Part of row string for either throughput or latency
+   */
+  const getRowStr = (i, keys, calcFunc) => {
+    let rowStr = "";
+    let sum = 0;
+    let count = 0;
+
+    for(const key of keys) {
+      const row = csv[key];
+      if(row[i]) {
+        rowStr += row[i];
+        sum += row[i];
+        count++;
+      }
+      rowStr += ",";
+    }
+    rowStr += calcFunc(sum, count);
+    return rowStr;
+  }
+
+  let str = headerRow + "\n";
+
+  // Get time, throughput and latency data for each row
+  for(let i = 0; i < maxRows; i++) {
+    const time = csv["time"][i];
+    const throughputRow = getRowStr(i, throughputKeys, totalFunc);
+    const latencyRow = getRowStr(i, latencyKeys, averageFunc)
+    str += `${time},${throughputRow},${latencyRow}\n`;
+  }
+
+  return str;
+}
+
+/**
+ * Download a .csv file with the current throughput and latency metrics in the dataset
+ * @param {String} fileName The file name to download the .csv file as
+ */
+const exportToCSV = fileName => {
+  if(!fileName) {
+    console.log("Need a file name to export the .csv file");
+    return;
+  }
+  
+  const csv = getObjectCSV();
+  const csvString = getStringCSV(csv);
+
+  const element = document.createElement("a");
+  element.href = `data:text/csv;charset=utf-8,${encodeURI(csvString)}`;
+  element.download = `${fileName}.csv`;
+  element.click();
+}
+
+/**
  * Background and border colors available for use for different datasets in a graph 
  */
 const colors = [
@@ -484,7 +598,21 @@ eventSource.addEventListener("countdown", e => {
   const minutes = parseInt(e.data);
   clearInterval(countdownInterval);
   startCountdown(minutes);
-})
+});
+
+/**
+ * SSE event that fires when an experiment has completed successfully.
+ * An experiment is received and used to construct a file name that is used 
+ * as the name for a CSV file that is built and automatically downloaded.
+ */
+eventSource.addEventListener("completed", e => {
+  const { experimentName, broker, producers, minutes } = JSON.parse(e.data);
+  const fileName = `${broker}-${producers}-${minutes}-${experimentName}`;
+  exportToCSV(fileName);
+
+  // Empty dataset before next experiment starts
+  dataset = {};
+});
 
 /**
  * Executes when adding a new experiment to the table.

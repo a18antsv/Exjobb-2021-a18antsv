@@ -20,8 +20,10 @@ const PUBLISH_TO_FRONTEND_RATE = 1000;
 let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
+let previouslyCompletedExperimentId = undefined; // Id of the previously completed experiment id
 let experimentsVersionGlobal = 0; // Incremented after experiment status change to detect when to send SSE update to client
 let startIndexGlobal = 0; // Incremented after consumer informs a successful connection to the broker on experiment start
+let completionIndexGlobal = 0; // Incremented after consumer informs a successfully completed experiment
 let aggregations = {};
 
 /**
@@ -102,6 +104,8 @@ const stopExperiment = (experimentId, isForced = false) => {
       experiment.status = Status.NOT_STARTED;
     } else {
       experiment.status = Status.COMPLETED;
+      completionIndexGlobal++;
+      previouslyCompletedExperimentId = runningExperimentId;
     }
 
     runningExperimentId = undefined;
@@ -321,6 +325,7 @@ app.post("/start", (req, res) => {
 app.get("/events", (req, res) => {
   let experimentsVersionLocal = 0; // Compared with global experiments version to determine if there is a newer version to send or not
   let startIndexLocal = 0;
+  let completionIndexLocal = 0;
 
   res.set({
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -335,9 +340,19 @@ app.get("/events", (req, res) => {
     }
 
     if(startIndexLocal < startIndexGlobal) {
-      const { minutes } = getExperimentById(runningExperimentId);
-      res.write(`event: countdown\ndata: ${minutes}\n\n`);
-      startIndexLocal = startIndexGlobal;
+      const experiment = getExperimentById(runningExperimentId);
+      if(experiment) {
+        res.write(`event: countdown\ndata: ${experiment.minutes}\n\n`);
+        startIndexLocal = startIndexGlobal;
+      }
+    }
+
+    if(completionIndexLocal < completionIndexGlobal) {
+      const experiment = getExperimentById(previouslyCompletedExperimentId);
+      if(experiment) {
+        res.write(`event: completed\ndata: ${JSON.stringify(experiment)}\n\n`);
+        completionIndexLocal = completionIndexGlobal;
+      }
     }
   }, STATUS_UPDATE_RATE);
 
