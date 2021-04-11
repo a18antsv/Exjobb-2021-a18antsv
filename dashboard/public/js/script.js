@@ -393,7 +393,7 @@ const drawGraph = (from, to) => {
 
     for(const timeKey in buckets) {
       const date = new Date(timeKey);
-      chart.data.labels.push(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`);
+      chart.data.labels.push(`${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}:${("0" + date.getSeconds()).slice(-2)}`);
 
       const stations = buckets[timeKey];
       for(const stationId in stations) {
