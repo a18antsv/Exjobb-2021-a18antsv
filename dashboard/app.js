@@ -323,9 +323,11 @@ app.post("/start", (req, res) => {
  * A connection with the client will always be open to make it possible to constantly send consumed data and status updates.
  */
 app.get("/events", (req, res) => {
-  let experimentsVersionLocal = 0; // Compared with global experiments version to determine if there is a newer version to send or not
-  let startIndexLocal = 0;
-  let completionIndexLocal = 0;
+  // Compared with global variables to determine if there is an update or not
+  // Sets equal to the global on new event source requests to prevent problems on refresh 
+  let experimentsVersionLocal = experimentsVersionGlobal;
+  let startIndexLocal = startIndexGlobal;
+  let completionIndexLocal = startIndexGlobal;
 
   res.set({
     "Content-Type": "text/event-stream; charset=utf-8",
