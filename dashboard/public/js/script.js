@@ -210,32 +210,32 @@ const renderExperimentsTable = () => {
 
     const buttonObjects = [
       {
-        text: "M",
-        clazz: "manage",
+        text: "bar_chart",
+        clazz: "material-icons",
         func: manageExperiment,
         showOnStatuses: [Status.STARTING, Status.IN_PROGRESS]
       },
       {
-        text: "Q",
-        clazz: "queue",
+        text: "add_to_queue",
+        clazz: "material-icons",
         func: queueExperiment,
         showOnStatuses: [Status.NOT_STARTED, Status.COMPLETED]
       },
       {
-        text: "DQ",
-        clazz: "dequeue",
+        text: "remove_from_queue",
+        clazz: "material-icons",
         func: dequeueExperiment,
         showOnStatuses: [Status.IN_QUEUE]
       },
       {
-        text: "S",
-        clazz: "stop",
+        text: "stop",
+        clazz: "material-icons",
         func: stopExperiment,
         showOnStatuses: [Status.IN_PROGRESS]
       },
       {
-        text: "D",
-        clazz: "delete",
+        text: "delete",
+        clazz: "material-icons",
         func: deleteExperiment,
         showOnStatuses: [Status.NOT_STARTED, Status.COMPLETED]
       }
