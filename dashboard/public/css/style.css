@@ -109,7 +109,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.small-button {
+.pointer {
   cursor: pointer;
 }
 
@@ -162,8 +162,8 @@ td {
   border: solid 1px rgba(255, 255, 255, 0.2);
 }
 
-.row-new-experiment input,
-.row-new-experiment select {
+input,
+select {
   max-width: 100%;
   width: 100px;
   border: none;
@@ -176,12 +176,29 @@ td {
   border-bottom: solid 2px rgba(255, 255, 255, 0.5);
 }
 
-.row-new-experiment select option {
+.filter-inputs input {
+  width: 42px;
+}
+
+.filter-inputs .small-button {
+  width: auto;
+}
+
+.filter-inputs span {
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.filter-inputs form {
+  display: inline-block;
+}
+
+select option {
   color: #000000;
   font-size: 16px;
 }
 
-.row-new-experiment input[type="submit"] {
+.small-button {
   border: solid 2px rgba(255, 255, 255, 0.5);
   cursor: pointer;
   padding: 8px;

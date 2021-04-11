@@ -7,6 +7,7 @@ const backButton = document.querySelector(".back-button");
 const sortableTableHeaders = experimentsTable.querySelectorAll("th[data-sortable]");
 const chartCanvasElements = document.querySelectorAll(".chart");
 const countdownElement = document.querySelector(".countdown");
+const filterApplyButton = document.querySelector(`[name="filter-apply"]`);
 
 const EXPERIMENTS_KEY = "experiments";
 const eventSource = new EventSource("/events"); // Open Server-Sent Events (SSE) connection to server for constant status updates and data transfer
@@ -15,6 +16,8 @@ let experiments = [];
 let chartsByMetric = {};
 let dataset = {};
 let countdownInterval;
+let secondsFilterFrom = 15;
+let secondsFilterTo = 0;
 
 /**
  * Saves key/value pair in the browser's local storage.
@@ -249,7 +252,7 @@ const renderExperimentsTable = () => {
 
       const buttonElement = document.createElement("div");
       buttonElement.innerText = text;
-      buttonElement.classList.add("small-button", clazz);
+      buttonElement.classList.add("pointer", clazz);
       buttonElement.addEventListener("click", () => func(experimentId));
       buttonContainer.appendChild(buttonElement);
     }
@@ -582,8 +585,8 @@ eventSource.addEventListener("message", e => {
 
   // Sliding window for the graph (how far back in time should the graph show max)
   const now = new Date();
-  const from = new Date(now.getTime() - 15 * 1000);
-  const to = now;
+  const from = new Date(now.getTime() - secondsFilterFrom * 1000);
+  const to = new Date(now.getTime() - secondsFilterTo * 1000);
 
   // Draw graph and filter by time (from - to)
   drawGraph(from, to);
@@ -609,9 +612,18 @@ eventSource.addEventListener("completed", e => {
   const { experimentName, broker, producers, minutes } = JSON.parse(e.data);
   const fileName = `${broker}-${producers}-${minutes}-${experimentName}`;
   exportToCSV(fileName);
+});
 
-  // Empty dataset before next experiment starts
-  dataset = {};
+/**
+ * Applies filter to the graph based on input fields from and to.
+ * The input fields represents the number of seconds from the current time.
+ */
+filterApplyButton.addEventListener("click", e => {
+  e.preventDefault();
+  const filterFromInput = document.querySelector(`[name="filter-from"]`);
+  const filterToInput = document.querySelector(`[name="filter-to"]`);
+  secondsFilterFrom = filterFromInput.value;
+  secondsFilterTo = filterToInput.value;
 });
 
 /**

@@ -50,7 +50,7 @@
             </td>
             <td>Not started</td>
             <td>
-              <input type="submit" form="new-experiment-form" value="Add">
+              <input type="submit" class="small-button" form="new-experiment-form" value="Add">
             </td>
           </tr>
         </tbody>
@@ -60,6 +60,14 @@
       <div class="back-button">Back</div>
       <div class="header">
         <div class="title">Performance data</div>
+        <div class="filter-inputs">
+          <span>FROM/TO (s):</span>
+          <form action="" method="post">
+            <input type="number" name="filter-from" placeholder="From" value="15" min="0" required>
+            <input type="number" name="filter-to" placeholder="To" value="0" min="0" required>
+            <input type="submit" class="small-button" name="filter-apply" value="Apply">
+          </form>
+        </div>
         <div class="countdown">00:00:00</div>
       </div>
       <div class="cards">
