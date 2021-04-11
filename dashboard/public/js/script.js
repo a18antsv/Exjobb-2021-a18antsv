@@ -598,6 +598,7 @@ eventSource.addEventListener("message", e => {
  * The received data contains the number of minutes to countdown for.
  */
 eventSource.addEventListener("countdown", e => {
+  dataset = {}; // Empty dataset before experiment starts to prevent having old data in new experiment data
   const minutes = parseInt(e.data);
   clearInterval(countdownInterval);
   startCountdown(minutes);
