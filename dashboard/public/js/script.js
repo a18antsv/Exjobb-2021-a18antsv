@@ -693,8 +693,8 @@ chartCanvasElements.forEach(chartCanvasElement => {
   const ctx = chartCanvasElement.getContext("2d");
   const metric = chartCanvasElement.dataset.metric;
 
-  const chart = new Chart(ctx, {
-    type: "bar",
+  chartsByMetric[metric] = new Chart(ctx, {
+    type: metric === "throughput" ? "bar" : "line",
     data: {
       labels: [],
       datasets: []
@@ -703,14 +703,14 @@ chartCanvasElements.forEach(chartCanvasElement => {
       animation: false,
       scales: {
         y: {
-          beginAtZero: true
+          beginAtZero: true,
+          stacked: metric === "throughput"
         },
         x: {
-          beginAtZero: true
+          beginAtZero: true,
+          stacked: metric === "throughput"
         }
       }
     }
   });
-
-  chartsByMetric[metric] = chart;
 });
