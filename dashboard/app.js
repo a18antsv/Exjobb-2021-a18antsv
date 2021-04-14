@@ -335,7 +335,7 @@ app.get("/events", (req, res) => {
     "Cache-Control": "no-cache"
   });
 
-  setInterval(() => {
+  const statusUpdateInterval = setInterval(() => {
     if(experimentsVersionLocal < experimentsVersionGlobal) {
       res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
       experimentsVersionLocal = experimentsVersionGlobal;
@@ -358,13 +358,18 @@ app.get("/events", (req, res) => {
     }
   }, STATUS_UPDATE_RATE);
 
-  setInterval(() => {
+  const publishInterval = setInterval(() => {
     res.write(`event: message\ndata: ${JSON.stringify(aggregations)}\n\n`);
 
     // Empty aggregations every time we send to frontend
     aggregations = {};
 
   }, PUBLISH_TO_FRONTEND_RATE);
+
+  req.on("close", () => {
+    clearInterval(statusUpdateInterval);
+    clearInterval(publishInterval);
+  })
 });
 
 app.listen(port, () => {
