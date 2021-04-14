@@ -1,17 +1,9 @@
-import amqp from "amqplib";
 import http from "http";
-import { 
-  promiseHandler as handler
-} from "./shared/utils.js";
-import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
-import {
-  aggregations,
-  saveMessage
-} from "./shared/aggregations.js";
+import { promiseHandler as handler } from "./shared/utils.js";
+import {  connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
+import { aggregations, saveMessage } from "./shared/aggregations.js";
 
 const QUEUE_NAME = "air-quality-observation-queue";
-const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
-const MAXIMUM_NUMBER_OF_RETRIES = 30;
 const EXPERIMENT_TIME_MS = (process.env.NUMBER_OF_MINUTES || 10) * 60 * 1000;
 const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 1000;
 
@@ -21,17 +13,8 @@ const commonRequestProperties = {
   method: "POST",
 };
 
-const amqpConnectionSettings = {
-  protocol: "amqp",
-  hostname: "rabbit-node-1",
-  port: 5672,
-  username: "guest",
-  password: "guest",
-  vhost: "/",
-};
-
 (async () => {
-  const [connectionError, connection] = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_RETRIES, MAXIMUM_NUMBER_OF_RETRIES);
+  const [connectionError, connection] = await connectToRabbitMQ();
   if(connectionError) {
     return console.error("Exceeded maximum number of failed connection retries to RabbitMQ. Exiting...");
   }
@@ -85,7 +68,7 @@ const amqpConnectionSettings = {
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
   const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
-    console.log(`Consumed air quality observation.`);
+    //console.log(`Consumed air quality observation.`);
     const message = JSON.parse(messageObject.content.toString());
     saveMessage(message);
 

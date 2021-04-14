@@ -1,7 +1,4 @@
-import amqp from "amqplib";
-import { 
-  promiseHandler as handler
-} from "./shared/utils.js";
+import { promiseHandler as handler } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 
@@ -10,8 +7,6 @@ const EXCHANGE_TYPE = "direct";
 const QUEUE_NAME = "air-quality-observation-queue";
 const BINDING_KEY = "air-quality-observation-binding";
 const ROUTING_KEY = BINDING_KEY;
-const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
-const MAXIMUM_NUMBER_OF_RETRIES = 30;
 let previousConcentrations;
 
 // Properties included in air quality data point that never changes for an air quality sensor station
@@ -24,18 +19,8 @@ const defaultStationProperties = {
   }
 };
 
-// Settings used to connect to RabbitMQ
-const amqpConnectionSettings = {
-  protocol: "amqp",
-  hostname: "rabbit-node-1",
-  port: 5672,
-  username: "guest",
-  password: "guest",
-  vhost: "/",
-};
-
 (async () => {
-  const [connectionError, connection] = await connectToRabbitMQ(amqpConnectionSettings, SECONDS_BETWEEN_CONNECTION_RETRIES, MAXIMUM_NUMBER_OF_RETRIES);
+  const [connectionError, connection] = await connectToRabbitMQ();
   if(connectionError) {
     return console.error("Exceeded maximum number of failed connection retries to RabbitMQ. Exiting...");
   }
@@ -77,7 +62,7 @@ const amqpConnectionSettings = {
   
     // Publish air quality observation to exchange with routing key
     channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
-    console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);
+    //console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);
     
     // When sending a lot of messages in a loop, nothing actually gets published on the socket until the code returns to the event loop
     // This is discussed here for another amqp library for node.js https://github.com/squaremo/amqp.node/issues/144
