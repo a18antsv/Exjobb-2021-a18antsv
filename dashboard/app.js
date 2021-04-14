@@ -1,8 +1,11 @@
 import express from "express";
+import SSE from "express-sse";
 import { execFile } from "child_process";
 
 const app = express();
 const port = 3000;
+
+const sse = new SSE();
 
 // Statuses that an experiment can have
 const Status = {
@@ -14,17 +17,9 @@ const Status = {
   COMPLETED: "Completed"
 };
 
-const STATUS_UPDATE_RATE = 1000;
-const PUBLISH_TO_FRONTEND_RATE = 1000;
-
 let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
-let previouslyCompletedExperimentId = undefined; // Id of the previously completed experiment id
-let experimentsVersionGlobal = 0; // Incremented after experiment status change to detect when to send SSE update to client
-let startIndexGlobal = 0; // Incremented after consumer informs a successful connection to the broker on experiment start
-let completionIndexGlobal = 0; // Incremented after consumer informs a successfully completed experiment
-let aggregations = {};
 
 /**
  * Gets an experiment from the experiments array based on its id.
@@ -47,7 +42,8 @@ const runExperiment = experimentId => {
 
   // Update experiment status directly without waiting for the bash script to finish
   experiment.status = Status.STARTING;
-  experimentsVersionGlobal++;
+  sse.send(experiments, "status-update", undefined);
+
   runningExperimentId = experimentId;
 
   const shFilePath = `./sh/${broker.toLowerCase()}-start-experiment.sh`;
@@ -58,7 +54,7 @@ const runExperiment = experimentId => {
     // Update status again once all containers have finished starting
     // Code executing before error checking since errors occur even when all containers started just fine sometimes
     experiment.status = Status.IN_PROGRESS;
-    experimentsVersionGlobal++;
+    sse.send(experiments, "status-update", undefined);
 
     console.log(`Experiment with id ${experimentId} is running.`);
     if(err) {
@@ -92,24 +88,24 @@ const stopExperiment = (experimentId, isForced = false) => {
 
   // Update experiment status directly without waiting for the bash script to finish
   experiment.status = Status.STOPPING;
-  experimentsVersionGlobal++;
+  sse.send(experiments, "status-update", undefined);
 
   execFile(shFilePath, shArgs, (err, stdout, stderr) => {
     /**
      * Sometimes Docker gives an error even if everything seems to stop just fine
      * which caused the code below the error if-statements to not execute.
-     * Moved the code above to exectue it despite any errors
+     * Moved the code above to execute it despite any errors
      */
     if(isForced) {
       experiment.status = Status.NOT_STARTED;
     } else {
       experiment.status = Status.COMPLETED;
-      completionIndexGlobal++;
-      previouslyCompletedExperimentId = runningExperimentId;
+      sse.send(experiment, "completed", undefined);
     }
 
+    sse.send(experiments, "status-update", undefined);
+    
     runningExperimentId = undefined;
-    experimentsVersionGlobal++;
     nextExperiment();
     
     if(err) {
@@ -301,7 +297,7 @@ app.post("/stop", (req, res) => {
  * This route is used to receive consumed messages from consumer services.
  */
 app.post("/aggregations", (req, res) => {
-  aggregations = req.body;
+  sse.send(req.body, "message", undefined);
 });
 
 /**
@@ -315,7 +311,10 @@ app.post("/completed", (req, res) => {
  * This route is used to get requests from the consumer about experiment start after established broker connection
  */
 app.post("/start", (req, res) => {
-  startIndexGlobal++;
+  const experiment = getExperimentById(runningExperimentId);
+  if(experiment) {
+    sse.send({ minutes: experiment.minutes }, "countdown", undefined);
+  }
 });
 
 /**
@@ -323,53 +322,8 @@ app.post("/start", (req, res) => {
  * A connection with the client will always be open to make it possible to constantly send consumed data and status updates.
  */
 app.get("/events", (req, res) => {
-  // Compared with global variables to determine if there is an update or not
-  // Sets equal to the global on new event source requests to prevent problems on refresh 
-  let experimentsVersionLocal = experimentsVersionGlobal;
-  let startIndexLocal = startIndexGlobal;
-  let completionIndexLocal = startIndexGlobal;
-
-  res.set({
-    "Content-Type": "text/event-stream; charset=utf-8",
-    "Connection": "keep-alive",
-    "Cache-Control": "no-cache"
-  });
-
-  const statusUpdateInterval = setInterval(() => {
-    if(experimentsVersionLocal < experimentsVersionGlobal) {
-      res.write(`event: status-update\ndata: ${JSON.stringify(experiments)}\n\n`);
-      experimentsVersionLocal = experimentsVersionGlobal;
-    }
-
-    if(startIndexLocal < startIndexGlobal) {
-      const experiment = getExperimentById(runningExperimentId);
-      if(experiment) {
-        res.write(`event: countdown\ndata: ${experiment.minutes}\n\n`);
-        startIndexLocal = startIndexGlobal;
-      }
-    }
-
-    if(completionIndexLocal < completionIndexGlobal) {
-      const experiment = getExperimentById(previouslyCompletedExperimentId);
-      if(experiment) {
-        res.write(`event: completed\ndata: ${JSON.stringify(experiment)}\n\n`);
-        completionIndexLocal = completionIndexGlobal;
-      }
-    }
-  }, STATUS_UPDATE_RATE);
-
-  const publishInterval = setInterval(() => {
-    res.write(`event: message\ndata: ${JSON.stringify(aggregations)}\n\n`);
-
-    // Empty aggregations every time we send to frontend
-    aggregations = {};
-
-  }, PUBLISH_TO_FRONTEND_RATE);
-
-  req.on("close", () => {
-    clearInterval(statusUpdateInterval);
-    clearInterval(publishInterval);
-  })
+  res.flush = () => undefined; // https://github.com/dpskvn/express-sse/pull/38
+  sse.init(req, res);
 });
 
 app.listen(port, () => {

@@ -599,7 +599,7 @@ eventSource.addEventListener("message", e => {
  */
 eventSource.addEventListener("countdown", e => {
   dataset = {}; // Empty dataset before experiment starts to prevent having old data in new experiment data
-  const minutes = parseInt(e.data);
+  const minutes = parseInt(JSON.parse(e.data).minutes);
   clearInterval(countdownInterval);
   startCountdown(minutes);
 });
