@@ -105,3 +105,6 @@ dist
 
 # VScode project settings
 .vscode
+
+venv
+.idea
