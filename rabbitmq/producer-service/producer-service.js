@@ -37,8 +37,9 @@ const defaultStationProperties = {
     console.log("Could not create exchange or assert exchange existance.");
   }
 
+  // REMOVE THIS? Producer does not need to know about the queue
   // Create queue with given name if it does not already exist
-  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME));
+  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME, { noAck: true }));
   if(assertQueueError) {
     console.log("Could not create queue or assert queue existance.");
   }

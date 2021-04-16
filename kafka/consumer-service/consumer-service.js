@@ -9,8 +9,12 @@ import {
 } from "./shared/aggregations.js";
 
 const TOPIC_NAME = "air-quality-observation-topic";
+const START_TOPIC_NAME = "start";
+const NUMBER_OF_PRODUCERS = process.env.NUMBER_OF_PRODUCERS || 5;
 const EXPERIMENT_TIME_MS = (process.env.NUMBER_OF_MINUTES || 10) * 60 * 1000;
 const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 1000;
+let numberOfReadyProducers = 0;
+let publishInterval = null;
 
 const commonRequestProperties = {
   hostname: "dashboard-app",
@@ -25,27 +29,59 @@ const kafka = new Kafka({
   ]
 });
 
-// Create a consumer that joins a consumer group (required)
+const producer = kafka.producer();
 const consumer = kafka.consumer({
   groupId: "test-consumer-group"
 });
 
 (async () => {
-  const [connectionError] = await handler(consumer.connect());
-  if(connectionError) {
+  const [producerConnectionError] = await handler(producer.connect());
+  const [consumerConnectionError] = await handler(consumer.connect());
+  if(producerConnectionError || consumerConnectionError) {
     return console.error("Could not connect to Kafka...");
   }
 
-  // Subscribe consumer group to topic and start using latest offset
-  const [subscribeError] = await handler(consumer.subscribe({
-    topic: TOPIC_NAME,
-    fromBeginning: true
-  }));
-  if(!subscribeError) {
-    console.log(`Successfully subscribed to topic ${TOPIC_NAME}!`);
+  const [airTopicSubscribeError] = await handler(consumer.subscribe({ topic: TOPIC_NAME, fromBeginning: true }));
+  const [startTopicSubscribeError] = await handler(consumer.subscribe({ topic: START_TOPIC_NAME, fromBeginning: true }));
+  if(airTopicSubscribeError || startTopicSubscribeError) {
+    return console.error("Could not subscribe to topics...");
   }
+  console.log(`Successfully subscribed to topic ${TOPIC_NAME}!`)
+  console.log(`Successfully subscribed to topic ${START_TOPIC_NAME}!`);
 
-  setInterval(() => {
+  await handler(consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      if(topic === START_TOPIC_NAME) {
+        numberOfReadyProducers++;
+        if(numberOfReadyProducers === NUMBER_OF_PRODUCERS) {
+          const [sendError] = await handler(producer.send({
+            topic: START_TOPIC_NAME,
+            messages: [{
+              key: "consumer-service-1",
+              value: "consumer-service-1 is ready",
+              acks: -1
+            }]
+          }));
+          if(sendError) {
+            console.log(`Could not send start notification to topic ${START_TOPIC_NAME}`);
+          }
+          publishInterval = setInterval(publish, AGGREGATE_PUBLISH_RATE);
+          setTimeout(completed, EXPERIMENT_TIME_MS);
+          informStart();
+          handler(producer.disconnect());
+        }
+        return;
+      }
+
+      saveMessage(JSON.parse(message.value.toString()));
+    }
+  }));
+
+  /**
+   * 
+   */
+  const publish = () => {
+    console.log("PUBLISH");
     const data = JSON.stringify(aggregations);
     const request = http.request({
       path: "/aggregations",
@@ -60,12 +96,13 @@ const consumer = kafka.consumer({
 
     // Empty aggregations after every time we send to dashboard backend
     Object.keys(aggregations).forEach(stationId => delete aggregations[stationId]);
+  }
 
-  }, AGGREGATE_PUBLISH_RATE);
-
-  // A request to the dashboard backend for when the consumer will initialize its timeout function
-  // Used to make it possible to have a decently correct countdown on the frontend
-  {
+  /**
+   * A request to the dashboard backend for when the consumer will initialize its timeout function.
+   * Used to make it possible to have a decently correct countdown on the frontend.
+   */
+  const informStart = () => {
     const request = http.request({
       path: "/start",
       ...commonRequestProperties
@@ -73,21 +110,15 @@ const consumer = kafka.consumer({
     request.end();
   }
 
-  setTimeout(() => {
+  /**
+   * 
+   */
+  const completed = () => {
+    clearInterval(publishInterval);
     const request = http.request({
       path: "/completed",
       ...commonRequestProperties
     });
     request.end();
-  }, EXPERIMENT_TIME_MS);
-  
-  // Run consumer and handle one message at a time
-  await handler(consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
-      //const { stationId, timestamp, coordinates, concentrations } = JSON.parse(message.value.toString());
-      //console.log(`Consumed air quality observation from station with id ${stationId}. MO=${message.offset}, P=${partition} T=${topic} K=${message.key.toString()}.`);
-
-      saveMessage(JSON.parse(message.value.toString()));
-    }
-  }));
+  }
 })();

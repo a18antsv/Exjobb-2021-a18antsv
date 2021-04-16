@@ -25,12 +25,12 @@ const commonRequestProperties = {
     return console.error("Could not create channel within connection...");
   }
 
-  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME));
+  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME, { noAck: true }));
   if(assertQueueError) {
     console.log("Could not create queue or assert queue existance.");
   }
   
-  setInterval(() => {
+  const publishInterval = setInterval(() => {
     const data = JSON.stringify(aggregations);
     const request = http.request({
       path: "/aggregations",
@@ -59,6 +59,7 @@ const commonRequestProperties = {
   }
 
   setTimeout(() => {
+    clearInterval(publishInterval);
     const request = http.request({
       path: "/completed",
       ...commonRequestProperties

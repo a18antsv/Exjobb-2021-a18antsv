@@ -26,7 +26,7 @@ docker run -d \
 -e KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka-broker-1:9092,EXTERNAL://localhost:19092 \
 -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT \
 -e KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL \
--e KAFKA_CREATE_TOPICS=air-quality-observation-topic:10:1 \
+-e KAFKA_CREATE_TOPICS=air-quality-observation-topic:10:1,start:1:1 \
 --net common-network \
 wurstmeister/kafka:2.13-2.7.0
 

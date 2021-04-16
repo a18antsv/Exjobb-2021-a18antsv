@@ -9,9 +9,10 @@ docker run -d \
 --name rabbit-node-1 \
 -h rabbit-node-1 \
 -p 5672:5672 \
--p 15672:15672 \
 --net common-network \
-rabbitmq:3.8.14-management
+rabbitmq:3.8.14
+#-p 15672:15672 \
+#rabbitmq:3.8.14-management
 
 # Create and run one container instance of the RabbitMQ consumer image
 docker run -d \

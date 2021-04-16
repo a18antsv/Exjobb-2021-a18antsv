@@ -1,11 +1,12 @@
 import { CompressionTypes, Kafka } from "kafkajs";
-import { 
-  promiseHandler as handler
-} from "./shared/utils.js";
+import { promiseHandler as handler } from "./shared/utils.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 
 const TOPIC_NAME = "air-quality-observation-topic";
+const START_TOPIC_NAME = "start";
+const NUMBER_OF_PRODUCERS = process.env.NUMBER_OF_PRODUCERS || 5;
 let previousConcentrations;
+let numberOfReadyProducers = 0;
 
 // Properties included in air quality data point that never changes for an air quality sensor station
 // Will be merged into each air quality data point
@@ -24,43 +25,74 @@ const kafka = new Kafka({
   ]
 });
 const producer = kafka.producer();
+const consumer = kafka.consumer({
+  groupId: defaultStationProperties.stationId
+});
 
 (async () => {
-  // Some promises return void when resolving, making the response undefined and not necessary to destructure.
-  const [connectionError] = await handler(producer.connect());
-  if(connectionError) {
+  const [producerConnectionError] = await handler(producer.connect());
+  const [consumerConnectionError] = await handler(consumer.connect());
+  if(producerConnectionError || consumerConnectionError) {
     return console.error("Could not connect to Kafka...");
   }
 
-  // Produce messages indefinitely until consumer detects experiment completion based on time
-  while(true) {
-    previousConcentrations = getConcentrations(previousConcentrations);
+  const produce = async () => {
+    // Produce messages indefinitely until consumer detects experiment completion based on time and dashboard shuts containers down
+    while(true) {
+      previousConcentrations = getConcentrations(previousConcentrations);
 
-    // Merge default properties into new object by spreading and add generated concentrations and add timestamp
-    const airQualityObservation = {
-      ...defaultStationProperties,
-      concentrations: previousConcentrations,
-      timestamp: new Date().toISOString()
-    };
+      // Merge default properties into new object by spreading and add generated concentrations and add timestamp
+      const airQualityObservation = {
+        ...defaultStationProperties,
+        concentrations: previousConcentrations,
+        timestamp: new Date().toISOString()
+      };
 
-    // Send air quality observation to Kafka topic
-    const [sendError, producerRecordMetadata] = await handler(producer.send({
-      topic: TOPIC_NAME,
-      messages: [{
-        key: airQualityObservation.stationId,
-        value: JSON.stringify(airQualityObservation)
-      }],
-      acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
-      timeout: 30000,
-      compression: CompressionTypes.None,
-    }));
-  
-    /*if(!sendError) {
-      console.log(`Successfully sent air quality observation to topic ${TOPIC_NAME}`);
-    }*/
+      // Send air quality observation to Kafka topic
+      await handler(producer.send({
+        topic: TOPIC_NAME,
+        messages: [{
+          key: airQualityObservation.stationId,
+          value: JSON.stringify(airQualityObservation)
+        }],
+        acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
+        timeout: 30000,
+        compression: CompressionTypes.None,
+      }));
+      //await new Promise(resolve => setTimeout(resolve));
+    }
+
+    await handler(producer.disconnect());
+    process.exit(0);
   }
 
-  await handler(producer.disconnect());
+  const [subscribeError] = await handler(consumer.subscribe({
+    topic: START_TOPIC_NAME,
+    fromBeginning: true
+  }));
+  if(!subscribeError) {
+    console.log(`Successfully subscribed to topic ${START_TOPIC_NAME}!`);
+  }
 
-  process.exit(0);
+  await handler(consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      numberOfReadyProducers++;
+      if(numberOfReadyProducers === NUMBER_OF_PRODUCERS + 1) {
+        produce();
+        handler(consumer.disconnect());
+      }
+    }
+  }));
+
+  const [sendError] = await handler(producer.send({
+    topic: START_TOPIC_NAME,
+    messages: [{ 
+      key: defaultStationProperties.stationId,
+      value: `${defaultStationProperties.stationId} is ready!`,
+      acks: -1
+    }]
+  }));
+  if(sendError) {
+    console.log(`Could not send start notification to topic ${START_TOPIC_NAME}`);
+  }
 })();
