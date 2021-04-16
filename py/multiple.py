@@ -42,8 +42,8 @@ metric: Metric = Metric.Throughput  # The metric to graph from the files
 error_type: ErrorType = ErrorType.STD  # The error type to show in bar graph
 remove_tail: int = 10  # The number of values to remove from the beginning of data (producers produce before consumer is ready causing low throughput and high latency in beginning of experiment)
 remove_head: int = 10  # The number of values to remove from head of data
-fig_width_cm: float = 32
-fig_height_cm: float = 16
+fig_width_cm: float = 32.0
+fig_height_cm: float = 16.0
 dpi = 150
 
 colors: tuple = ("#0D95BC", "#A2B969", "#e9c46a", "#f4a261", "#e76f51", "#f4acb7")
@@ -57,9 +57,15 @@ for data_graph in data_graphs:
     labels.append("Kafka " + label)
     labels.append("RabbitMQ " + label)
 
-    if remove_head == 0 or remove_tail == 0:
+    if remove_head == 0 and remove_tail == 0:
         data_series.append(data_graph["kafka"][column])
         data_series.append(data_graph["rabbitmq"][column])
+    elif remove_head == 0 and remove_tail != 0:
+        data_series.append(pd.Series(data_graph["kafka"][column].tolist()[remove_tail:]))
+        data_series.append(pd.Series(data_graph["rabbitmq"][column].tolist()[remove_tail:]))
+    elif remove_head != 0 and remove_tail == 0:
+        data_series.append(pd.Series(data_graph["kafka"][column].tolist()[:-remove_head]))
+        data_series.append(pd.Series(data_graph["rabbitmq"][column].tolist()[:-remove_head]))
     else:
         data_series.append(pd.Series(data_graph["kafka"][column].tolist()[remove_tail:-remove_head]))
         data_series.append(pd.Series(data_graph["rabbitmq"][column].tolist()[remove_tail:-remove_head]))

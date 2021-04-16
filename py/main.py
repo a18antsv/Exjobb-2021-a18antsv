@@ -29,9 +29,12 @@ only_total_average = True  # Show only data in total throughput column / average
 remove_tail: int = 10  # The number of values to remove from the beginning of data (producers produce before consumer is ready causing low throughput and high latency in beginning of experiment)
 remove_head: int = 10  # The number of values to remove from head of data
 confidence_level: float = 0.95
+fig_width_cm: float = 32.0
+fig_height_cm: float = 16.0
+dpi: int = 150
 
 total_average: str = "total" if metric == Metric.Throughput else "average"
-colors: tuple = ("#0D95BC", "#A2B969", "#EBCB38", "#F36F13", "#C13018", "#063951")
+colors: tuple = ("#0D95BC", "#A2B969", "#e9c46a", "#f4a261", "#e76f51", "#f4acb7")
 
 kafka_data: DataFrame = pd.read_csv(kafka_file_name)
 rabbitmq_data: DataFrame = pd.read_csv(rabbitmq_file_name)
@@ -55,17 +58,24 @@ for column in columns:
 data_series: list[Series] = []  # List of pandas Series (Columns in DataFrame)
 data_list: list[list] = []  # All pandas Series converted to list to easily remove some head and tail values
 labels: list = []
-producers_str: str = f" {str(producer_num)} producer(s)" if only_total_average else ""  # Only show number of producers in legend when its the total or average of a number of producers
+producers_str: str = str(producer_num) if only_total_average else ""  # Only show number of producers in legend when its the total or average of a number of producers
 for column in filtered_columns:
-    label = column.replace("_" + metric.value, "").capitalize() + producers_str
-    labels.append(label + " Kafka")
+    keyword: str = column.replace("_" + metric.value, "")
+    labels.append(f"Kafka {keyword} {producers_str}")
     data_series.append(kafka_data[column])
 
-    labels.append(label + " RabbitMQ")
+    labels.append(f"RabbitMQ {keyword} {producers_str}")
     data_series.append(rabbitmq_data[column])
 
 for i, _ in enumerate(data_series):
-    data_list.append(data_series[i].tolist()[remove_tail:-remove_head])  # Remove a elements from tail of list : remove b elements from head of list)
+    if remove_head == 0 and remove_tail == 0:
+        data_list.append(data_series[i].tolist())
+    elif remove_head == 0 and remove_tail != 0:
+        data_list.append(data_series[i].tolist()[remove_tail:])
+    elif remove_head != 0 and remove_tail == 0:
+        data_list.append(data_series[i].tolist()[:-remove_head])
+    else:
+        data_list.append(data_series[i].tolist()[remove_tail:-remove_head])  # Remove a elements from tail of list : remove b elements from head of list)
 
 # Convert the cleaned lists to pandas Series and put them in the original list of series after clear
 data_series.clear()
@@ -83,7 +93,7 @@ def cm_to_inch(value):
 
 
 def generate_line_chart(in_data_series: list[Series]) -> None:
-    plt.figure(figsize=(cm_to_inch(24), cm_to_inch(12)))
+    plt.figure(figsize=(cm_to_inch(fig_width_cm), cm_to_inch(fig_height_cm)))
     for index, _ in enumerate(in_data_series):
         y = in_data_series[index]
         x = range(1, len(y) + 1)  # First data point at 1 instead of 0
@@ -96,7 +106,7 @@ def generate_line_chart(in_data_series: list[Series]) -> None:
     plt.grid(True)
     plt.ylim(ymin=0)
     plt.xlim(xmin=0, xmax=max_length - (remove_head + remove_tail))
-    plt.savefig(f"{img_output_folder}line-{metric}-{producer_num}producers.png", bbox_inches="tight", dpi=150)
+    plt.savefig(f"{img_output_folder}line-{metric}-{producer_num}producers.png", bbox_inches="tight", dpi=dpi)
     plt.show()
 
 
@@ -127,24 +137,22 @@ def generate_bar_chart(in_data_series) -> None:
     bars_order: range = range(len(labels))
     interval_capsize: int = 10
 
-    plt.figure(figsize=(cm_to_inch(24), cm_to_inch(12)))
+    plt.figure(figsize=(cm_to_inch(fig_width_cm), cm_to_inch(fig_height_cm)))
     bar_plot: BarContainer = plt.bar(bars_order, means, yerr=yerr, edgecolor="black", width=bar_width, capsize=interval_capsize, color=colors)
 
     for index, rect in enumerate(bar_plot):
         x_middle = rect.get_x() + rect.get_width() / 2.0
         y_middle = rect.get_y() + rect.get_height() / 2.0
-        plt.text(x_middle, y_middle + rect.get_height() / 3, f"Mean: {round(means[index], 4)}", ha="center",
-                 va="center", fontsize=12)
-        plt.text(x_middle, y_middle - rect.get_height() / 3, f"{error_type.value.upper()}: {round(yerr[index], 4)}",
-                 ha="center", va="center", fontsize=12)
+        plt.text(x_middle, y_middle + rect.get_height() / 4, round(means[index], 4), ha="center", va="center", fontsize=10)
+        plt.text(x_middle, y_middle - rect.get_height() / 4, round(yerr[index], 4), ha="center", va="center", fontsize=10)
 
-    plt.xticks(range(len(labels)), labels)
+    plt.xticks(range(len(labels)), labels, fontsize=10)
 
     plt.ylabel("Throughput (msgs/sec)" if metric == Metric.Throughput else "Latency (ms)")
-    plt.xlabel("Message broker and producers")
+    plt.xlabel("Broker/number of producers")
     plt.title(f"{metric.value.capitalize()} data {producer_num} producer(s) | Means/{error_type.value.upper()}s Comparison")
     plt.ylim(ymin=0)
-    plt.savefig(f"{img_output_folder}bar-{metric}-{producer_num}producers.png", bbox_inches="tight", dpi=150)
+    plt.savefig(f"{img_output_folder}bar-{metric}-{producer_num}producers.png", bbox_inches="tight", dpi=dpi)
     plt.show()
 
 
