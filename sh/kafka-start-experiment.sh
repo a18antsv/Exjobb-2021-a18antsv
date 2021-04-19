@@ -30,6 +30,7 @@ AGGREGATE_PUBLISH_RATE=1000
 # Used by producer container only
 LAT=37.5665
 LONG=126.9780
+MESSAGES_PER_BATCH=24
 
 # Commong network that all containers join
 NETWORK=common-network
@@ -90,6 +91,7 @@ do
   -e LAT=$LAT \
   -e LONG=$LONG \
   -e BROKERS=$BROKERS \
+  -e MESSAGES_PER_BATCH=$MESSAGES_PER_BATCH \
   --net $NETWORK \
   kafka-producer-image
 done

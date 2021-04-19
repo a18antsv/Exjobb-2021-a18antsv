@@ -1,14 +1,14 @@
-import { CompressionTypes } from "kafkajs";
 import { promiseHandler as handler } from "./shared/utils.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 import { createKafkaInstance } from "./shared/kafka-create-instance.js";
 import { createTopics } from "./shared/kafka-create-topics.js";
 
 const {
-  TOPIC_NAME = "air-quality-observation-topic",
+  TOPIC_NAME: topic = "air-quality-observation-topic",
   STATION_ID: stationId = "producer-service-1",
   LAT: lat = 37.5665,
-  LONG: long = 126.9780
+  LONG: long = 126.9780,
+  MESSAGES_PER_BATCH = 2048
 } = process.env;
 
 let previousConcentrations;
@@ -30,30 +30,28 @@ const defaultStationProperties = { stationId, coordinates: { lat, long } };
 
   // Produce messages indefinitely until consumer detects experiment completion based on time
   while(true) {
-    previousConcentrations = getConcentrations(previousConcentrations);
+    const messages = [];
 
-    // Merge default properties into new object by spreading and add generated concentrations and add timestamp
-    const airQualityObservation = {
-      ...defaultStationProperties,
-      concentrations: previousConcentrations,
-      timestamp: new Date().toISOString()
-    };
+    for(let i = 0; i < MESSAGES_PER_BATCH; i++) {
+      previousConcentrations = getConcentrations(previousConcentrations);
+  
+      // Merge default properties into new object by spreading and add generated concentrations and add timestamp
+      const airQualityObservation = {
+        ...defaultStationProperties,
+        concentrations: previousConcentrations,
+        timestamp: new Date().toISOString()
+      };
+
+      // Send message without key to not lock station messages to one partition (does not guarantee ordering)
+      messages.push({ value: JSON.stringify(airQualityObservation) });
+    }
 
     // Send air quality observation to Kafka topic
-    const [sendError, producerRecordMetadata] = await handler(producer.send({
-      topic: TOPIC_NAME,
-      messages: [{
-        key: airQualityObservation.stationId,
-        value: JSON.stringify(airQualityObservation)
-      }],
-      acks: -1, // 0 = no acks, 1 = Only leader, -1 = All insync replicas
-      timeout: 30000,
-      compression: CompressionTypes.None,
+    await handler(producer.send({
+      topic,
+      messages,
+      acks: -1
     }));
-  
-    /*if(!sendError) {
-      console.log(`Successfully sent air quality observation to topic ${TOPIC_NAME}`);
-    }*/
   }
 
   await handler(producer.disconnect());
