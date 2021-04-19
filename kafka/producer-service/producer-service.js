@@ -47,11 +47,7 @@ const defaultStationProperties = { stationId, coordinates: { lat, long } };
     }
 
     // Send air quality observation to Kafka topic
-    await handler(producer.send({
-      topic,
-      messages,
-      acks: -1
-    }));
+    await handler(producer.send({ topic, messages, acks: -1 }));
   }
 
   await handler(producer.disconnect());

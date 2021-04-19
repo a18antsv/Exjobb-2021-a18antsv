@@ -30,7 +30,7 @@ AGGREGATE_PUBLISH_RATE=1000
 # Used by producer container only
 LAT=37.5665
 LONG=126.9780
-MESSAGES_PER_BATCH=24
+MESSAGES_PER_BATCH=1024
 
 # Commong network that all containers join
 NETWORK=common-network
