@@ -2,7 +2,8 @@
 
 # Parameters passed into the script
 PRODUCERS=${1:-1} # The number of producer containers to spin up (First argument passed to script or default if not passed)
-MINUTES=${2:-10} # The number of miuntes the experiment should run
+CONSUMERS=${2:-1} # The number of consumer containers to spin up
+MINUTES=${3:-10} # The number of minutes the experiment should run
 
 # Topic creation
 TOPIC_NAME=air-quality-observation-topic
@@ -35,15 +36,18 @@ docker run -d \
 --net common-network \
 wurstmeister/kafka:2.13-2.7.0
 
-# Create and run one container instance of the Kafka consumer image
-docker run -d \
---name kafka-consumer-service-1 \
--e NUMBER_OF_MINUTES=$MINUTES \
--e TOPIC_NAME=$TOPIC_NAME \
--e NUMBER_OF_PARTITIONS=$NUMBER_OF_PARTITIONS \
--e REPLICATION_FACTOR=$REPLICATION_FACTOR \
---net common-network \
-kafka-consumer-image
+# Create and run a number of Kafka consumer containers depending on passed argument
+for ((i = 1; i <= $CONSUMERS; i++))
+do
+  docker run -d \
+  --name kafka-consumer-service-$i \
+  -e NUMBER_OF_MINUTES=$MINUTES \
+  -e TOPIC_NAME=$TOPIC_NAME \
+  -e NUMBER_OF_PARTITIONS=$NUMBER_OF_PARTITIONS \
+  -e REPLICATION_FACTOR=$REPLICATION_FACTOR \
+  --net common-network \
+  kafka-consumer-image
+done
 
 # Create and run a number of Kafka producer containers depending on passed argument
 for ((i = 1; i <= $PRODUCERS; i++))
