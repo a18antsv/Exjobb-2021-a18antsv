@@ -1,4 +1,4 @@
-import { promiseHandler as handler } from "./shared/utils.js";
+import { delay, promiseHandler as handler } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 
@@ -60,14 +60,17 @@ const defaultStationProperties = { stationId, coordinates: { lat, long } };
       timestamp: new Date().toISOString()
     };
   
-    // Publish air quality observation to exchange with routing key
-    channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
-    //console.log(`Published air quality observation to exchange "${EXCHANGE_NAME}".`);
-    
-    // When sending a lot of messages in a loop, nothing actually gets published on the socket until the code returns to the event loop
-    // This is discussed here for another amqp library for node.js https://github.com/squaremo/amqp.node/issues/144
-    // This seems to be a workaround that makes it possible to flush the publish
-    await new Promise(resolve => setTimeout(resolve));
+    /**
+     * When sending a lot of messages in a loop, nothing actually gets published on the socket until the code returns to the event loop (drain event).
+     * This is discussed here for another amqp library for node https://github.com/squaremo/amqp.node/issues/144.
+     * Publish returns a boolean for if we can keep sending or if a drain event is needed.
+     * Drain event seems to be needed for every 2048 messages published (tested by counting how often keepSending is false).
+     * Waiting 0-1ms seems to be a workaround that makes it possible to flush the publish.
+     */
+    const keepSending = channel.publish(EXCHANGE_NAME, ROUTING_KEY, Buffer.from(JSON.stringify(airQualityObservation)));
+    if(!keepSending) {
+      await delay(0);
+    }
   }
 
   await handler(channel.close());
