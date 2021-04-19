@@ -27,13 +27,12 @@ const { QUEUE_NAME = "air-quality-observation-queue" } = process.env;
 
   console.log(`Consuming messages from ${QUEUE_NAME}...`);
   const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
-    //console.log(`Consumed air quality observation.`);
     const message = JSON.parse(messageObject.content.toString());
     saveMessage(message);
 
     // Acknowledge successful message consumption to delete message from queue
-    channel.ack(messageObject);
-  }));
+    //channel.ack(messageObject);
+  }, { noAck: true }));
   if(consumeError) {
     console.log(`Could not consume from queue ${QUEUE_NAME}`);
   }
