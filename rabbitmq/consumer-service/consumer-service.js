@@ -3,7 +3,7 @@ import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { saveMessage } from "./shared/aggregations.js";
 import { startExperiment } from "./shared/consumer-to-dashboard.js";
 
-const QUEUE_NAME = "air-quality-observation-queue";
+const { QUEUE_NAME = "air-quality-observation-queue" } = process.env;
 
 (async () => {
   const [connectionError, connection] = await connectToRabbitMQ();

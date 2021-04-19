@@ -1,26 +1,24 @@
 import amqp from "amqplib";
 import { promiseHandler as handler, delay } from "./utils.js";
 
-const SECONDS_BETWEEN_CONNECTION_RETRIES = 2;
-const MAXIMUM_NUMBER_OF_RETRIES = 30;
+const {
+  PROTOCOL: protocol = "amqp",
+  HOSTNAME: hostname = "rabbitmq-node-1",
+  PORT: port = 5672,
+  USERNAME: username = "guest",
+  PASSWORD: password = "guest",
+  VHOST: vhost = "/",
+  SECONDS_BETWEEN_CONNECTION_RETRIES = 2,
+  MAXIMUM_NUMBER_OF_RETRIES = 30
+} = process.env;
 
 /**
  * The settings object used to connect to RabbitMQ with AMQP
  */
-const amqpConnectionSettings = {
-  protocol: "amqp",
-  hostname: "rabbit-node-1",
-  port: 5672,
-  username: "guest",
-  password: "guest",
-  vhost: "/",
-};
+const amqpConnectionSettings = { protocol, hostname, port, username, password, vhost };
 
 /**
  * Recursive function that attempts to connect to RabbitMQ until a successful connection is made.
- * @param {Object} amqpConnectionSettings The object with settings used when trying to conenct to RabbitMQ
- * @param {Number} SECONDS_BETWEEN_CONNECTION_RETRIES The number of seconds to delay between retries
- * @param {Number} MAXIMUM_NUMBER_OF_RETRIES The maximum number of connection retries before exiting recursive function with an error
  * @param {Number} retryNumber The current retry attempt number
  * @returns {Array} Two element array where the first position is the possible connection error and second position is the RabbitMQ connection
  */

@@ -16,4 +16,4 @@ do
 done
 
 # Forecefully remove the rest of the containers related to a RabbitMQ experiment
-docker rm -f rabbit-node-1
+docker rm -f rabbitmq-node-1

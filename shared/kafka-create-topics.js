@@ -2,8 +2,8 @@ import { promiseHandler as handler } from "./utils.js";
 
 const {
   TOPIC_NAME: topic = "air-quality-observation-topic",
-  NUMBER_OF_PARTITIONS: numPartitions = 1,
-  REPLICATION_FACTOR: replicationFactor = 1
+  NUMBER_OF_PARTITIONS = 1,
+  REPLICATION_FACTOR = 1
 } = process.env;
 
 /**
@@ -21,8 +21,8 @@ export const createTopics = async kafka => {
   const [createError, isCreated] = await handler(admin.createTopics({
     topics: [{
       topic,
-      numPartitions,
-      replicationFactor
+      numPartitions: parseInt(NUMBER_OF_PARTITIONS),
+      replicationFactor: parseInt(REPLICATION_FACTOR)
     }]
   }));
 

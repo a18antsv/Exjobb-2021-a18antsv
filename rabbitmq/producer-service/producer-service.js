@@ -2,22 +2,22 @@ import { promiseHandler as handler } from "./shared/utils.js";
 import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 
-const EXCHANGE_NAME = "air-quality-observation-exchange";
-const EXCHANGE_TYPE = "direct";
-const QUEUE_NAME = "air-quality-observation-queue";
-const BINDING_KEY = "air-quality-observation-binding";
+const {
+  QUEUE_NAME = "air-quality-observation-queue",
+  EXCHANGE_NAME = "air-quality-observation-exchange",
+  EXCHANGE_TYPE = "direct",
+  BINDING_KEY = "air-quality-observation-binding",
+  STATION_ID: stationId = "producer-service-1",
+  LAT: lat = 37.5665,
+  LONG: long = 126.9780
+} = process.env;
 const ROUTING_KEY = BINDING_KEY;
+
 let previousConcentrations;
 
 // Properties included in air quality data point that never changes for an air quality sensor station
 // Will be merged into each air quality data point
-const defaultStationProperties = {
-  stationId: process.env.STATION_ID || "producer-service-1",
-  coordinates: {
-    lat: process.env.LAT || 37.5665,
-    long: process.env.LONG || 126.9780
-  }
-};
+const defaultStationProperties = { stationId, coordinates: { lat, long } };
 
 (async () => {
   const [connectionError, connection] = await connectToRabbitMQ();
