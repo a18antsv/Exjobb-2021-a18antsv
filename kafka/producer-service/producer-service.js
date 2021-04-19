@@ -1,31 +1,25 @@
-import { CompressionTypes, Kafka } from "kafkajs";
-import { 
-  promiseHandler as handler
-} from "./shared/utils.js";
+import { CompressionTypes } from "kafkajs";
+import { promiseHandler as handler } from "./shared/utils.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
+import { createKafkaInstance } from "./shared/kafka-create-instance.js";
 
-const TOPIC_NAME = "air-quality-observation-topic";
+const {
+  TOPIC_NAME = "air-quality-observation-topic",
+  STATION_ID: stationId = "producer-service-1",
+  LAT: lat = 37.5665,
+  LONG: long = 126.9780
+} = process.env;
+
 let previousConcentrations;
 
 // Properties included in air quality data point that never changes for an air quality sensor station
 // Will be merged into each air quality data point
-const defaultStationProperties = {
-  stationId: process.env.STATION_ID || "producer-service-1",
-  coordinates: {
-    lat: process.env.LAT || 37.5665,
-    long: process.env.LONG || 126.9780
-  }
-}
-
-const kafka = new Kafka({
-  clientId: defaultStationProperties.stationId,
-  brokers: [ 
-    "kafka-broker-1:9092" 
-  ]
-});
-const producer = kafka.producer();
+const defaultStationProperties = { stationId, coordinates: { lat, long } };
 
 (async () => {
+  const kafka = createKafkaInstance(stationId);
+  const producer = kafka.producer();
+
   // Some promises return void when resolving, making the response undefined and not necessary to destructure.
   const [connectionError] = await handler(producer.connect());
   if(connectionError) {
