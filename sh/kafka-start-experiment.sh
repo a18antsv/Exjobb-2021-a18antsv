@@ -4,6 +4,11 @@
 PRODUCERS=${1:-1} # The number of producer containers to spin up (First argument passed to script or default if not passed)
 MINUTES=${2:-10} # The number of miuntes the experiment should run
 
+# Topic creation
+TOPIC_NAME=air-quality-observation-topic
+NUMBER_OF_PARTITIONS=10
+REPLICATION_FACTOR=1
+
 # Create and run Zookeeper container based on official Zookeeper image from Docker Hub
 docker run -d \
 --name zookeeper-node-1 \
@@ -26,7 +31,7 @@ docker run -d \
 -e KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka-broker-1:9092,EXTERNAL://localhost:19092 \
 -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT \
 -e KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL \
--e KAFKA_CREATE_TOPICS=air-quality-observation-topic:10:1 \
+-e KAFKA_AUTO_CREATE_TOPICS_ENABLE=false \
 --net common-network \
 wurstmeister/kafka:2.13-2.7.0
 
@@ -34,6 +39,9 @@ wurstmeister/kafka:2.13-2.7.0
 docker run -d \
 --name kafka-consumer-service-1 \
 -e NUMBER_OF_MINUTES=$MINUTES \
+-e TOPIC_NAME=$TOPIC_NAME \
+-e NUMBER_OF_PARTITIONS=$NUMBER_OF_PARTITIONS \
+-e REPLICATION_FACTOR=$REPLICATION_FACTOR \
 --net common-network \
 kafka-consumer-image
 
@@ -43,6 +51,9 @@ do
   docker run -d \
   --name kafka-producer-service-$i \
   -e STATION_ID=producer-service-$i \
+  -e TOPIC_NAME=$TOPIC_NAME \
+  -e NUMBER_OF_PARTITIONS=$NUMBER_OF_PARTITIONS \
+  -e REPLICATION_FACTOR=$REPLICATION_FACTOR \
   --net common-network \
   kafka-producer-image
 done

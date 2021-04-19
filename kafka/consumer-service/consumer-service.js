@@ -2,11 +2,13 @@ import { promiseHandler as handler } from "./shared/utils.js";
 import { saveMessage } from "./shared/aggregations.js";
 import { startExperiment } from "./shared/consumer-to-dashboard.js";
 import { createKafkaInstance } from "./shared/kafka-create-instance.js";
+import { createTopics } from "./shared/kafka-create-topics.js";
 
 const TOPIC_NAME = "air-quality-observation-topic";
 
 (async () => {
   const kafka = createKafkaInstance("consumer-service-1");
+  await createTopics(kafka);
   const consumer = kafka.consumer({ groupId: "test-consumer-group" });
 
   const [connectionError] = await handler(consumer.connect());

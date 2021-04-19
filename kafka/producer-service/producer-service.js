@@ -2,6 +2,7 @@ import { CompressionTypes } from "kafkajs";
 import { promiseHandler as handler } from "./shared/utils.js";
 import { getConcentrations } from "./shared/concentration-generator.js";
 import { createKafkaInstance } from "./shared/kafka-create-instance.js";
+import { createTopics } from "./shared/kafka-create-topics.js";
 
 const {
   TOPIC_NAME = "air-quality-observation-topic",
@@ -18,6 +19,7 @@ const defaultStationProperties = { stationId, coordinates: { lat, long } };
 
 (async () => {
   const kafka = createKafkaInstance(stationId);
+  await createTopics(kafka);
   const producer = kafka.producer();
 
   // Some promises return void when resolving, making the response undefined and not necessary to destructure.
