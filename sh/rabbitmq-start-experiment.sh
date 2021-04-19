@@ -18,10 +18,11 @@ SECONDS_BETWEEN_CONNECTION_RETRIES=2
 MAXIMUM_NUMBER_OF_RETRIES=30
 
 # Queue/Exchange/Binding
+NUMBER_OF_QUEUES=$CONSUMERS
 QUEUE_NAME=air-quality-observation-queue
 EXCHANGE_NAME=air-quality-observation-exchange
 EXCHANGE_TYPE=direct
-BINDING_KEY=air-quality-observation-binding
+BINDING_KEY=$QUEUE_NAME
 
 # Used by consumer container only
 DASHBOARD_HOSTNAME=dashboard-app
@@ -50,6 +51,7 @@ do
   --name rabbitmq-consumer-service-$i \
   -e NUMBER_OF_MINUTES=$MINUTES \
   -e QUEUE_NAME=$QUEUE_NAME \
+  -e NUMBER_OF_QUEUES=$NUMBER_OF_QUEUES \
   -e AGGREGATION_RATE=$AGGREGATION_RATE \
   -e AGGREGATE_PUBLISH_RATE=$AGGREGATE_PUBLISH_RATE \
   -e DASHBOARD_HOSTNAME=$DASHBOARD_HOSTNAME \
@@ -73,6 +75,7 @@ do
   --name rabbitmq-producer-service-$i \
   -e STATION_ID=producer-service-$i \
   -e QUEUE_NAME=$QUEUE_NAME \
+  -e NUMBER_OF_QUEUES=$NUMBER_OF_QUEUES \
   -e EXCHANGE_NAME=$EXCHANGE_NAME \
   -e EXCHANGE_TYPE=$EXCHANGE_TYPE \
   -e BINDING_KEY=$BINDING_KEY \

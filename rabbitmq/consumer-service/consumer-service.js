@@ -3,7 +3,10 @@ import { connectToRabbitMQ } from "./shared/rabbitmq-connect.js";
 import { saveMessage } from "./shared/aggregations.js";
 import { startExperiment } from "./shared/consumer-to-dashboard.js";
 
-const { QUEUE_NAME = "air-quality-observation-queue" } = process.env;
+const { 
+  QUEUE_NAME = "air-quality-observation-queue",
+  NUMBER_OF_QUEUES = 1
+} = process.env;
 
 (async () => {
   const [connectionError, connection] = await connectToRabbitMQ();
@@ -17,23 +20,24 @@ const { QUEUE_NAME = "air-quality-observation-queue" } = process.env;
     return console.error("Could not create channel within connection...");
   }
 
-  const [assertQueueError, queueInfo] = await handler(channel.assertQueue(QUEUE_NAME));
-  if(assertQueueError) {
-    console.log("Could not create queue or assert queue existance.");
+  for(let i = 1; i <= NUMBER_OF_QUEUES; i++) {
+    const queueName = `${QUEUE_NAME}-${i}`;
+
+    const [assertQueueError, queueInfo] = await handler(channel.assertQueue(queueName));
+    if(assertQueueError) {
+      console.log("Could not create queue or assert queue existance.");
+    }
+
+    console.log(`Consuming messages from ${queueName}...`);
+    const [consumeError, { consumerTag }] = await handler(channel.consume(queueName, (messageObject) => {
+      saveMessage(JSON.parse(messageObject.content.toString()));
+      // channel.ack(messageObject);
+    }, { noAck: true }));
+    if(consumeError) {
+      console.log(`Could not consume from queue ${QUEUE_NAME}`);
+    }
   }
-  
+
   // Start publish interval, experiment timeout and inform dashboard-backend
   startExperiment();
-
-  console.log(`Consuming messages from ${QUEUE_NAME}...`);
-  const [consumeError, { consumerTag }] = await handler(channel.consume(QUEUE_NAME, (messageObject) => {
-    const message = JSON.parse(messageObject.content.toString());
-    saveMessage(message);
-
-    // Acknowledge successful message consumption to delete message from queue
-    //channel.ack(messageObject);
-  }, { noAck: true }));
-  if(consumeError) {
-    console.log(`Could not consume from queue ${QUEUE_NAME}`);
-  }
 })();
