@@ -1,92 +1,36 @@
-import { Kafka } from "kafkajs";
-import http from "http";
-import { 
-  promiseHandler as handler
-} from "./shared/utils.js";
-import {
-  aggregations,
-  saveMessage
-} from "./shared/aggregations.js";
+import { promiseHandler as handler } from "./shared/utils.js";
+import { saveMessage } from "./shared/aggregations.js";
+import { startExperiment } from "./shared/consumer-to-dashboard.js";
+import { createKafkaInstance } from "./shared/kafka-create-instance.js";
+import { createTopics } from "./shared/kafka-create-topics.js";
 
-const TOPIC_NAME = "air-quality-observation-topic";
-const EXPERIMENT_TIME_MS = (process.env.NUMBER_OF_MINUTES || 10) * 60 * 1000;
-const AGGREGATE_PUBLISH_RATE = process.env.AGGREGATE_PUBLISH_RATE || 1000;
-
-const commonRequestProperties = {
-  hostname: "dashboard-app",
-  port: 3000,
-  method: "POST",
-};
-
-const kafka = new Kafka({
-  clientId: "consumer-service-1",
-  brokers: [
-    "kafka-broker-1:9092"
-  ]
-});
-
-// Create a consumer that joins a consumer group (required)
-const consumer = kafka.consumer({
-  groupId: "test-consumer-group"
-});
+const {
+  TOPIC_NAME = "air-quality-observation-topic",
+  NUMBER_OF_PARTITIONS = 1,
+  CONSUMER_ID = "consumer-service-1",
+  CONSUMER_GROUP_ID = "test-consumer-group",
+} = process.env;
 
 (async () => {
+  const kafka = createKafkaInstance(CONSUMER_ID);
+  await createTopics(kafka);
+  const consumer = kafka.consumer({ groupId: CONSUMER_GROUP_ID });
+
   const [connectionError] = await handler(consumer.connect());
   if(connectionError) {
     return console.error("Could not connect to Kafka...");
   }
 
-  // Subscribe consumer group to topic and start using latest offset
-  const [subscribeError] = await handler(consumer.subscribe({
-    topic: TOPIC_NAME,
-    fromBeginning: true
-  }));
-  if(!subscribeError) {
-    console.log(`Successfully subscribed to topic ${TOPIC_NAME}!`);
-  }
+  // Subscribe consumer group to topic
+  await handler(consumer.subscribe({ topic: TOPIC_NAME, fromBeginning: false }));
 
-  setInterval(() => {
-    const data = JSON.stringify(aggregations);
-    const request = http.request({
-      path: "/aggregations",
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Length": data.length
-      },
-      ...commonRequestProperties
-    });
-    request.write(data);
-    request.end();
+  // Start publish interval, experiment timeout and inform dashboard-backend
+  startExperiment();
 
-    // Empty aggregations after every time we send to dashboard backend
-    Object.keys(aggregations).forEach(stationId => delete aggregations[stationId]);
-
-  }, AGGREGATE_PUBLISH_RATE);
-
-  // A request to the dashboard backend for when the consumer will initialize its timeout function
-  // Used to make it possible to have a decently correct countdown on the frontend
-  {
-    const request = http.request({
-      path: "/start",
-      ...commonRequestProperties
-    });
-    request.end();
-  }
-
-  setTimeout(() => {
-    const request = http.request({
-      path: "/completed",
-      ...commonRequestProperties
-    });
-    request.end();
-  }, EXPERIMENT_TIME_MS);
-  
   // Run consumer and handle one message at a time
   await handler(consumer.run({
+    partitionsConsumedConcurrently: parseInt(NUMBER_OF_PARTITIONS),
     eachMessage: async ({ topic, partition, message }) => {
-      //const { stationId, timestamp, coordinates, concentrations } = JSON.parse(message.value.toString());
-      //console.log(`Consumed air quality observation from station with id ${stationId}. MO=${message.offset}, P=${partition} T=${topic} K=${message.key.toString()}.`);
-
       saveMessage(JSON.parse(message.value.toString()));
     }
   }));

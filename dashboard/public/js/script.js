@@ -15,7 +15,7 @@ let Status = {};
 let experiments = [];
 let chartsByMetric = {};
 let dataset = {};
-let countdownInterval;
+let countdownInterval = null;
 let secondsFilterFrom = 15;
 let secondsFilterTo = 0;
 
@@ -153,6 +153,7 @@ const stopExperiment = async experimentId => {
   }
   experiments = data.experiments;
   clearInterval(countdownInterval);
+  countdownInterval = null;
   countdownElement.innerText = "00:00:00";
   saveToLocalStorage(EXPERIMENTS_KEY, experiments);
   renderExperimentsTable();
@@ -177,6 +178,7 @@ const renderExperimentsTable = () => {
       experimentName, 
       broker, 
       producers, 
+      consumers,
       minutes, 
       status 
     } = experiment;
@@ -192,6 +194,7 @@ const renderExperimentsTable = () => {
     const tdName = document.createElement("td");
     const tdBroker = document.createElement("td");
     const tdProducers = document.createElement("td");
+    const tdConsumers = document.createElement("td");
     const tdMinutes = document.createElement("td");
     const tdStatus = document.createElement("td");
     const buttonContainer = document.createElement("td");
@@ -199,6 +202,7 @@ const renderExperimentsTable = () => {
     tdName.innerText = experimentName;
     tdBroker.innerText = broker;
     tdProducers.innerText = producers;
+    tdConsumers.innerText = consumers;
     tdMinutes.innerText = minutes;
     tdStatus.innerText = status;
     buttonContainer.classList.add("button-container");
@@ -206,6 +210,7 @@ const renderExperimentsTable = () => {
     row.appendChild(tdName);
     row.appendChild(tdBroker);
     row.appendChild(tdProducers);
+    row.appendChild(tdConsumers);
     row.appendChild(tdMinutes);
     row.appendChild(tdStatus);
     row.appendChild(buttonContainer);
@@ -290,6 +295,7 @@ const startCountdown = (minutes = 10) => {
   
     if(timeLeft <= 0) {
       clearInterval(countdownInterval);
+      countdownInterval = null;
       countdownElement.innerText = "00:00:00";
       return;
     }
@@ -598,9 +604,11 @@ eventSource.addEventListener("message", e => {
  * The received data contains the number of minutes to countdown for.
  */
 eventSource.addEventListener("countdown", e => {
+  if(countdownInterval !== null) return;
   dataset = {}; // Empty dataset before experiment starts to prevent having old data in new experiment data
   const minutes = parseInt(JSON.parse(e.data).minutes);
   clearInterval(countdownInterval);
+  countdownInterval = null;
   startCountdown(minutes);
 });
 
@@ -638,6 +646,7 @@ newExperimentForm.addEventListener("submit", async e => {
   const experimentName = document.querySelector(`[name="experimentName"]`).value;
   const broker = document.querySelector(`[name="broker"]`).value;
   const producers = document.querySelector(`[name="producers"]`).value;
+  const consumers = document.querySelector(`[name="consumers"]`).value;
   const minutes = document.querySelector(`[name="minutes"]`).value;
 
   const experiment = {
@@ -645,6 +654,7 @@ newExperimentForm.addEventListener("submit", async e => {
     experimentName,
     broker,
     producers,
+    consumers,
     minutes,
     status: ""
   };

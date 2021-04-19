@@ -20,7 +20,7 @@ RUN if [ "${NODE_ENV}" = "development" ]; \
 COPY ./kafka/producer-service/ ./
 
 # Copy shared utils file to shared directory of set image working directory
-COPY ./shared/utils.js ./shared/concentration-generator.js ./shared/concentration-statistics.js ./shared/
+COPY ./shared/ ./shared/
 
 # Command to execute when container instance is created based on image (starts application in container)
 CMD [ "npm", "run", "prod" ]

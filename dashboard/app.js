@@ -38,7 +38,7 @@ const getExperimentById = experimentId => {
  */
 const runExperiment = experimentId => {
   const experiment = getExperimentById(experimentId);
-  const { broker, producers, minutes } = experiment;
+  const { broker, producers, consumers, minutes } = experiment;
 
   // Update experiment status directly without waiting for the bash script to finish
   experiment.status = Status.STARTING;
@@ -47,7 +47,7 @@ const runExperiment = experimentId => {
   runningExperimentId = experimentId;
 
   const shFilePath = `./sh/${broker.toLowerCase()}-start-experiment.sh`;
-  const shArgs = [producers, minutes];
+  const shArgs = [producers, consumers, minutes];
 
   console.log(`Starting experiment with id ${experimentId}...`);
   execFile(shFilePath, shArgs, (err, stdout, stderr) => {
@@ -81,10 +81,10 @@ const stopExperiment = (experimentId, isForced = false) => {
   }
 
   const experiment = getExperimentById(experimentId);
-  const { broker, producers } = experiment;
+  const { broker, producers, consumers } = experiment;
 
   const shFilePath = `./sh/${broker.toLowerCase()}-stop-experiment.sh`;
-  const shArgs = [producers];
+  const shArgs = [producers, consumers];
 
   // Update experiment status directly without waiting for the bash script to finish
   experiment.status = Status.STOPPING;
@@ -309,6 +309,7 @@ app.post("/completed", (req, res) => {
 
 /**
  * This route is used to get requests from the consumer about experiment start after established broker connection
+ * @todo Probably want to log the time of countdown start on backend to be able to restore it on frontend on possible page refresh
  */
 app.post("/start", (req, res) => {
   const experiment = getExperimentById(runningExperimentId);
