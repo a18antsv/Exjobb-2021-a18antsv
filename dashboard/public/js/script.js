@@ -618,8 +618,8 @@ eventSource.addEventListener("countdown", e => {
  * as the name for a CSV file that is built and automatically downloaded.
  */
 eventSource.addEventListener("completed", e => {
-  const { experimentName, broker, producers, minutes } = JSON.parse(e.data);
-  const fileName = `${broker}-${producers}-${minutes}-${experimentName}`;
+  const { experimentName, broker, producers, consumers, minutes } = JSON.parse(e.data);
+  const fileName = `${broker}-${producers}-${consumers}-${minutes}-${experimentName}`;
   exportToCSV(fileName);
 });
 
