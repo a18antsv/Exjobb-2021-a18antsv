@@ -69,7 +69,8 @@ export const saveMessage = message => {
   }
 
   // Get a common key based on the timestamp by rounding
-  const key = getTimeKey(new Date(timestamp));
+  // const key = getTimeKey(new Date(timestamp)); // Producer throughput
+  const key = getTimeKey(new Date()); // Consumer throughput
 
   const station = aggregations[stationId];
 
