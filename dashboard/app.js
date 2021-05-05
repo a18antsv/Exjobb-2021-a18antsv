@@ -60,12 +60,10 @@ const runExperiment = experimentId => {
 
     console.log(`Experiment with id ${experimentId} is running.`);
     if(err) {
-      console.log(`error: ${err.message}`);
-      return;
+      return console.log(`error: ${err.message}`);
     }
     if(stderr) {
-      console.log(`stderr: ${stderr}`);
-      return;
+      return console.log(`stderr: ${stderr}`);
     }
     console.log(`stdout (Docker container ids): ${stdout}`);
   });
@@ -78,8 +76,7 @@ const runExperiment = experimentId => {
  */
 const stopExperiment = (experimentId, isForced = false) => {
   if(!runningExperimentId) {
-    console.log("No experiment is running... Nothing to stop.");
-    return;
+    return console.log("No experiment is running... Nothing to stop.");
   }
 
   const experiment = getExperimentById(experimentId);
@@ -111,12 +108,10 @@ const stopExperiment = (experimentId, isForced = false) => {
     nextExperiment();
     
     if(err) {
-      console.log(`error: ${err.message}`);
-      return;
+      return console.log(`error: ${err.message}`);
     }
     if(stderr) {
-      console.log(`stderr: ${stderr}`);
-      return;
+      return console.log(`stderr: ${stderr}`);
     }
     console.log(`stdout: ${stdout}`);
   });
@@ -128,13 +123,11 @@ const stopExperiment = (experimentId, isForced = false) => {
  */
 const nextExperiment = () => {
   if(runningExperimentId) {
-    console.log("An experiment is already running... Cannot start another one.");
-    return;
+    return console.log("An experiment is already running... Cannot start another one.");
   }
   const experimentId = experimentIdQueue.pop();
   if(!experimentId) {
-    console.log("There are no experiments in queue...");
-    return;
+    return console.log("There are no experiments in queue...");
   }
   runExperiment(experimentId);
 }
@@ -175,11 +168,10 @@ app.post("/delete", (req, res) => {
   });
 
   if(indexToDelete === -1) {
-    res.json({ 
+    return res.json({ 
       "message": `Could not find experiment with id ${experimentId}... Nothing deleted.`,
       "success": false
     });
-    return;
   }
 
   experiments.splice(indexToDelete, 1);
@@ -196,19 +188,17 @@ app.post("/queue", (req, res) => {
   const experiment = getExperimentById(experimentId);
 
   if(!experiment) {
-    res.json({ 
+    return res.json({ 
       "message": `Could not find experiment with id ${experimentId}... Nothing added to queue.`,
       "success": false
     });
-    return;
   }
 
   if(experimentIdQueue.includes(experimentId)) {
-    res.json({
+    return res.json({
       "message": `Experiment with id ${experimentId} is already in queue. Nothing added to queue.`,
       "success": false  
     });
-    return;
   }
 
   experiment.status = Status.IN_QUEUE;
@@ -230,19 +220,17 @@ app.post("/dequeue", (req, res) => {
   const experiment = getExperimentById(experimentId);
 
   if(!experiment) {
-    res.json({ 
+    return res.json({ 
       "message": `Could not find experiment with id ${experimentId}... No experiment dequeued.`,
       "success": false
     });
-    return;
   }
 
   if(!experimentIdQueue.includes(experimentId)) {
-    res.json({
+    return res.json({
       "message": `Experiment with id ${experimentId} is not in queue... No experiment dequeued.`,
       "success": false  
     });
-    return;
   }
 
   // Remove experiment from queue
@@ -261,27 +249,24 @@ app.post("/stop", (req, res) => {
   const experiment = getExperimentById(experimentId);
 
   if(!experiment) {
-    res.json({ 
+    return res.json({ 
       "message": `Could not find experiment with id ${experimentId}... No experiment stopped.`,
       "success": false
     });
-    return;
   }
 
   if(!runningExperimentId) {
-    res.json({
+    return res.json({
       "message": `There is currently no experiment running... No experiment stopped.`,
       "success": false  
     });
-    return;
   }
 
   if(runningExperimentId !== experimentId) {
-    res.json({
+    return res.json({
       "message": `Experiment id ${experimentId} does not match with the currently running experiment... Could not stop.`,
       "success": false  
     });
-    return;
   }
 
   // Remove experiment from queue
