@@ -54,6 +54,7 @@ const runExperiment = experimentId => {
   execFile(shFilePath, shArgs, (err, stdout, stderr) => {
     // Update status again once all containers have finished starting
     // Code executing before error checking since errors occur even when all containers started just fine sometimes
+    consumerCompleteCount = 0;
     experiment.status = Status.IN_PROGRESS;
     sse.send(experiments, "status-update", undefined);
 
