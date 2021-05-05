@@ -20,6 +20,7 @@ const Status = {
 let experiments = []; // All stored experiments (whole JSON-objects)
 let experimentIdQueue = []; // Queue of experiment ids of experiments to be executed
 let runningExperimentId = undefined; // Id of currently running experiment or undefined if no experiment runs
+let consumerCompleteCount = 0;
 
 /**
  * Gets an experiment from the experiments array based on its id.
@@ -304,7 +305,10 @@ app.post("/aggregations", (req, res) => {
  * This route is used to get requests from the consumer about experiment completions
  */
 app.post("/completed", (req, res) => {
-  stopExperiment(runningExperimentId, false);
+  consumerCompleteCount++;
+  if(consumerCompleteCount === 1) {
+    stopExperiment(runningExperimentId, false);
+  }
 });
 
 /**
