@@ -206,10 +206,16 @@ def tukey_test(in_data_series: list[Series]) -> None:
     tukey_results: multi.TukeyHSDResults = multi.pairwise_tukeyhsd(endog=stacked_data["result"], groups=stacked_data["groups"], alpha=(1.0-confidence_level))
     print(tukey_results.summary())
 
-    tukey_results.plot_simultaneous()
     grand_mean = stacked_data["result"].values.mean()
-    plt.vlines(x=grand_mean, ymin=-0.5, ymax=len(data_series) - 0.5, color="red", linestyles="dashed")
-    plt.show()
+    figsize = (cm_to_inch(fig_width_cm), cm_to_inch(fig_height_cm))
+    xlabel = "Throughput (msgs/sec)" if metric == Metric.Throughput else "Latency (ms)"
+    ylabel = "Broker/producers"
+
+    for label in labels:
+        tukey_results.plot_simultaneous(comparison_name=label, figsize=figsize, xlabel=xlabel, ylabel=ylabel)
+        plt.vlines(x=grand_mean, ymin=-0.5, ymax=len(data_series) - 0.5, color="black", linestyles="dashed")
+        plt.savefig(f"{img_output_folder}tukey/tukey-{metric}-{label}.png", bbox_inches="tight", dpi=dpi)
+        plt.show()
 
 
 # Filter the data series by slicing before plotting if needed
