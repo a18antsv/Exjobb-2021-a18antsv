@@ -159,13 +159,15 @@ def generate_bar_chart(in_data_series: list[Series], error_type: ErrorType = Err
     for index, rect in enumerate(bar_plot):
         x_middle = rect.get_x() + rect.get_width() / 2.0
         y_middle = rect.get_y() + rect.get_height() / 2.0
+        mean = round(means[index], 2)
+        error = round(yerr[index], 2)
 
         if part_size * 2 > y_middle:
-            plt.text(x_middle, rect.get_height() + part_size * 3, round(means[index], 2), ha="center", va="center", fontsize=font_size, color="#000000")
-            plt.text(x_middle, rect.get_height() + part_size, round(yerr[index], 2), ha="center", va="center", fontsize=font_size, color="#000000")
+            plt.text(x_middle, rect.get_height() + part_size * 3, mean, ha="center", va="center", fontsize=font_size, color="#000000")
+            plt.text(x_middle, rect.get_height() + part_size, "±"+str(error), ha="center", va="center", fontsize=font_size, color="#000000")
         else:
-            plt.text(x_middle, part_size * 3, round(means[index], 2), ha="center", va="center", fontsize=font_size, color=font_colors[index])
-            plt.text(x_middle, part_size, round(yerr[index], 2), ha="center", va="center", fontsize=font_size, color=font_colors[index])
+            plt.text(x_middle, part_size * 3, mean, ha="center", va="center", fontsize=font_size, color=font_colors[index])
+            plt.text(x_middle, part_size, "±"+str(error), ha="center", va="center", fontsize=font_size, color=font_colors[index])
 
     plt.xticks(range(len(labels)), labels, fontsize=font_size)
 
