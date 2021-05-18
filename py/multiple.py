@@ -18,6 +18,34 @@ class ErrorType(str, enum.Enum):
     SEM = "sem"
     CI = "ci"
 
+
+class Interval:
+    def __init__(self, mean, error, label):
+        self.min = mean - error
+        self.max = mean + error
+        self.label = label
+
+    def overlaps_with(self, interval):
+        if self.min <= interval.min <= self.max:
+            return True
+        if self.min <= interval.max <= self.max:
+            return True
+        if interval.min <= self.min and self.max <= interval.max:
+            return True
+        return False
+
+
+def compare_intervals(intervals: list[Interval], interval_type: str):
+    for i in range(len(intervals)):
+        a = intervals[i]
+        for j in range(len(intervals)):
+            if i == j:
+                continue
+            b = intervals[j]
+            if a.overlaps_with(b):
+                print(f"{interval_type}: {a.label} and {b.label} overlaps.")
+
+
 # The .csv structure looks like this ["time"], ["producer-service-1_throughput"]....., ["total_throughput"], ["producer-service-1_latency"]....., ["average_latency"]
 
 # The scale of the diagram is based on the maximum value of any dataset.
@@ -138,6 +166,7 @@ def generate_bar_chart(in_data_series: list[Series], error_type: ErrorType = Err
     bar_width: float = 0.9
     font_size: int = 10
 
+    intervals: list[Interval] = []
     means: list[float] = []
     stds: list[float] = []
     sems: list[float] = []
@@ -161,6 +190,7 @@ def generate_bar_chart(in_data_series: list[Series], error_type: ErrorType = Err
         y_middle = rect.get_y() + rect.get_height() / 2.0
         mean = round(means[index], 2)
         error = round(yerr[index], 2)
+        intervals.append(Interval(mean, error, labels[index]))
 
         if part_size * 2 > y_middle:
             plt.text(x_middle, rect.get_height() + part_size * 3, mean, ha="center", va="center", fontsize=font_size, color="#000000")
@@ -176,7 +206,8 @@ def generate_bar_chart(in_data_series: list[Series], error_type: ErrorType = Err
     plt.title(f"{keyword} {metric.value} data | Means/{error_type.value.upper()}s Comparison")
     plt.ylim(ymin=0, ymax=max_value + part_size)
     plt.savefig(f"{img_output_folder}bar-{metric}-{error_type.value.lower()}.png", bbox_inches="tight", dpi=dpi)
-    plt.show()
+
+    compare_intervals(intervals, f"{metric.value.capitalize()}-{error_type.value.upper()}")
 
 
 def anova(in_data_series: list[Series]) -> None:
